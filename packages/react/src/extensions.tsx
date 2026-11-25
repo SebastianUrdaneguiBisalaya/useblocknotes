@@ -35,7 +35,9 @@ import {
 import type { ReactNode } from "react";
 import type { $ZodType } from "zod/v4/core";
 import { safeParse } from "zod/v4/core";
+import { BlockViewContext } from "./context.js";
 import { BLOCK_GROUP, nodeToBlock, TITLE_NODE } from "./convert.js";
+import { BlockKeymap, ListNumbers, listNumberOf } from "./lists.js";
 import type { ReactBlockDefinition, ReactInlineDefinition } from "./types.js";
 
 /** Placeholder texts shown in empty nodes. */
@@ -88,7 +90,8 @@ function BlockView(
     readonly registry: BlockRegistry<ReactNode>;
   },
 ): ReactNode {
-  const { definition, editor, node, registry, updateAttributes } = props;
+  const { decorations, definition, editor, node, registry, updateAttributes } =
+    props;
   const editable = useEditorState({
     editor,
     selector: (snapshot) => snapshot.editor.isEditable,
@@ -108,7 +111,7 @@ function BlockView(
         }
       />
     );
-  } else if (definition.content === "inline") {
+  } else if (definition.content !== "none") {
     body = <NodeViewContent className="bn-block-content" />;
   } else {
     body = (
@@ -118,14 +121,20 @@ function BlockView(
     );
   }
   return (
-    <NodeViewWrapper
-      className="bn-block"
-      data-bn-block=""
-      data-bn-id={block.id}
-      data-bn-type={block.type}
+    <BlockViewContext
+      value={{
+        listNumber: listNumberOf(decorations),
+      }}
     >
-      {body}
-    </NodeViewWrapper>
+      <NodeViewWrapper
+        className="bn-block"
+        data-bn-block=""
+        data-bn-id={block.id}
+        data-bn-type={block.type}
+      >
+        {body}
+      </NodeViewWrapper>
+    </BlockViewContext>
   );
 }
 
@@ -133,8 +142,16 @@ function blockNode(
   definition: ReactBlockDefinition,
   registry: BlockRegistry<ReactNode>,
 ): AnyExtension {
-  const inline = definition.content === "inline";
+  const inline = definition.content !== "none";
+  const plainText = definition.content === "text";
   return Node.create({
+    ...(plainText
+      ? {
+          code: true,
+          marks: "",
+          whitespace: "pre" as const,
+        }
+      : {}),
     addAttributes() {
       return {
         id: {
@@ -165,7 +182,7 @@ function blockNode(
       );
     },
     atom: !inline,
-    content: inline ? "inline*" : "",
+    content: plainText ? "text*" : inline ? "inline*" : "",
     defining: true,
     group: BLOCK_GROUP,
     name: definition.type,
@@ -361,5 +378,7 @@ export function createExtensions(
       showOnlyCurrent: false,
     }),
     BlockIds,
+    ListNumbers,
+    BlockKeymap,
   ];
 }
