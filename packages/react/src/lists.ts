@@ -169,10 +169,57 @@ function changeIndent(tr: Transaction, delta: number): boolean {
   return true;
 }
 
-function handleEnter(tr: Transaction): boolean {
+/**
+ * Enter in a text block that is not a list or code: the new block is always a
+ * paragraph, whatever the current type or the order of the registered blocks.
+ *
+ * - In the title, the text after the cursor moves to a new first paragraph.
+ * - At the end of a block (or in an empty one), an empty paragraph follows.
+ * - At the start of a non-empty block, an empty paragraph goes before it.
+ * - In the middle, the default split keeps the block type.
+ */
+function enterParagraph(tr: Transaction): boolean {
+  const { selection } = tr;
+  const { $from } = selection;
+  const paragraph = tr.doc.type.schema.nodes[PARAGRAPH];
+  const node = $from.parent;
+  if (
+    paragraph === undefined ||
+    !selection.empty ||
+    $from.depth !== 1 ||
+    !node.isTextblock ||
+    node.type.spec.code === true ||
+    isList(node)
+  ) {
+    return false;
+  }
+  const atEnd = $from.parentOffset === node.content.size;
+  if (node.type.name !== TITLE_NODE && !atEnd) {
+    if ($from.parentOffset > 0) {
+      return false;
+    }
+    tr.insert($from.before(1), paragraph.create());
+    tr.scrollIntoView();
+    return true;
+  }
+  tr.split($from.pos, 1, [
+    {
+      attrs: {
+        id: null,
+        props: {},
+      },
+      type: paragraph,
+    },
+  ]);
+  tr.scrollIntoView();
+  return true;
+}
+
+/** @internal Exported for tests. Runs the editor's Enter handling on `tr`. */
+export function handleEnter(tr: Transaction): boolean {
   const block = currentBlock(tr);
   if (block === null) {
-    return false;
+    return enterParagraph(tr);
   }
   const { node, pos } = block;
 
@@ -216,7 +263,7 @@ function handleEnter(tr: Transaction): boolean {
     tr.scrollIntoView();
     return true;
   }
-  return false;
+  return enterParagraph(tr);
 }
 
 function handleBackspace(tr: Transaction): boolean {
@@ -268,9 +315,10 @@ function shortcut(
 
 /**
  * @internal Notion-like keys for built-in blocks: Enter continues or ends
- * lists, Tab and Shift-Tab indent list items, Backspace at the start turns a
- * block into a paragraph, Enter on two empty lines leaves a code block, and
- * Markdown shortcuts (`- `, `1. `, `> `, ```` ``` ````, `# `) convert paragraphs.
+ * lists and starts a paragraph after any other text block or the title, Tab
+ * and Shift-Tab indent list items, Backspace at the start turns a block into
+ * a paragraph, Enter on two empty lines leaves a code block, and Markdown
+ * shortcuts (`- `, `1. `, `> `, ```` ``` ````, `# `) convert paragraphs.
  */
 export const BlockKeymap = Extension.create({
   addInputRules() {
