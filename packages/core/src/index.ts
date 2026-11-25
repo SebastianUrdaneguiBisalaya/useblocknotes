@@ -24,6 +24,17 @@ export type {
   TextNode,
 } from "./document.js";
 export type {
+  ApplyOperationsOptions,
+  DeleteOperation,
+  InsertOperation,
+  MoveOperation,
+  Operation,
+  OperationError,
+  SetTitleOperation,
+  UpdateOperation,
+} from "./operations.js";
+export { applyOperations } from "./operations.js";
+export type {
   BlockRegistry,
   RegistryErrorCode,
   RegistryOptions,
