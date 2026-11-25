@@ -60,7 +60,7 @@ export function createConfig(outDir: string = OUT_DIR): Options {
       "react",
       "react-dom",
       "react/jsx-runtime",
-      "@usesounds/core",
+      "@useblocknotes/core",
     ],
 
     format: [

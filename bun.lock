@@ -23,6 +23,23 @@
         "@types/bun": "catalog:",
         "tsup": "catalog:",
         "typescript": "catalog:",
+        "zod": "catalog:",
+      },
+      "peerDependencies": {
+        "zod": "^4",
+      },
+    },
+    "packages/pdf": {
+      "name": "@useblocknotes/pdf",
+      "version": "0.1.0",
+      "devDependencies": {
+        "@types/bun": "catalog:",
+        "@useblocknotes/core": "workspace:^",
+        "tsup": "catalog:",
+        "typescript": "catalog:",
+      },
+      "peerDependencies": {
+        "@useblocknotes/core": "workspace:^",
       },
     },
     "packages/react": {
@@ -58,6 +75,7 @@
     "react-dom": "19.3.1",
     "tsup": "8.5.1",
     "typescript": "6.0.3",
+    "zod": "4.6.7",
   },
   "packages": {
     "@andrewbranch/untar.js": ["@andrewbranch/untar.js@1.0.4", "", {}, "sha512-pVXSwPsLuw8IGLo2Di0EaOfsk+ntVvpkk942J/sHYIkwvtKUakEcPh7HBgZ6tuimgzKSEHgCvO4XgQ05DEbwDw=="],
@@ -318,6 +336,8 @@
 
     "@useblocknotes/core": ["@useblocknotes/core@workspace:packages/core"],
 
+    "@useblocknotes/pdf": ["@useblocknotes/pdf@workspace:packages/pdf"],
+
     "@useblocknotes/react": ["@useblocknotes/react@workspace:packages/react"],
 
     "acorn": ["acorn@8.19.0", "", { "bin": { "acorn": "bin/acorn" } }, "sha512-oJlA3XiRm7Cyk6qFD2Jn8ak9B7jSy0qy00ADO3+8dpT0LSjFihQYv4C02LFCSYJV3Q37xYwwRy5m+IpIiUzqWw=="],
@@ -550,9 +570,13 @@
 
     "yargs-parser": ["yargs-parser@20.2.9", "", {}, "sha512-y11nGElTIV+CT3Zv9t7VKl+Q3hTQoT9a1Qzezhhl6Rp21gJ/IVTW7Z3y9EWXhuUBC2Shnf+DX0antecpAwSP8w=="],
 
+    "zod": ["zod@4.6.7", "", {}, "sha512-g8W2D2kU6a8untc053fX1uVBKzM7yqAxW/3zwk83+6RyF2+SKOuV+c0wBDhUwzV1PaGapmZH+rmcUzPf+3CGwg=="],
+
     "@arethetypeswrong/core/typescript": ["typescript@5.6.1-rc", "", { "bin": { "tsc": "bin/tsc", "tsserver": "bin/tsserver" } }, "sha512-E3b2+1zEFu84jB0YQi9BORDjz9+jGbwwy1Zi3G0LUNw7a7cePUrHMRNy8aPh53nXpkFGVHSxIZo5vKTfYaFiBQ=="],
 
     "@useblocknotes/core/typescript": ["typescript@6.0.3", "", { "bin": { "tsc": "bin/tsc", "tsserver": "bin/tsserver" } }, "sha512-y2TvuxSZPDyQakkFRPZHKFm+KKVqIisdg9/CZwm9ftvKXLP8NRWj38/ODjNbr43SsoXqNuAisEf1GdCxqWcdBw=="],
+
+    "@useblocknotes/pdf/typescript": ["typescript@6.0.3", "", { "bin": { "tsc": "bin/tsc", "tsserver": "bin/tsserver" } }, "sha512-y2TvuxSZPDyQakkFRPZHKFm+KKVqIisdg9/CZwm9ftvKXLP8NRWj38/ODjNbr43SsoXqNuAisEf1GdCxqWcdBw=="],
 
     "@useblocknotes/react/typescript": ["typescript@6.0.3", "", { "bin": { "tsc": "bin/tsc", "tsserver": "bin/tsserver" } }, "sha512-y2TvuxSZPDyQakkFRPZHKFm+KKVqIisdg9/CZwm9ftvKXLP8NRWj38/ODjNbr43SsoXqNuAisEf1GdCxqWcdBw=="],
 

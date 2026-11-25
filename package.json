@@ -1,13 +1,36 @@
 {
   "name": "useblocknotes",
-  "module": "index.ts",
   "type": "module",
   "private": true,
-  "license": "ISC",
+  "description": "Open-source Notion-style block editor built on Tiptap, with AI responses streamed live into the editor.",
+  "keywords": [
+    "notion",
+    "block-editor",
+    "editor",
+    "rich-text",
+    "tiptap",
+    "prosemirror",
+    "ai",
+    "streaming",
+    "typescript",
+    "react",
+    "pdf",
+    "monorepo"
+  ],
+  "license": "MIT",
   "author": {
     "name": "Sebastian Marat Urdanegui Bisalaya",
     "url": "https://sebastianurdanegui.com"
   },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/SebastianUrdaneguiBisalaya/useblocknotes.git"
+  },
+  "homepage": "https://github.com/SebastianUrdaneguiBisalaya/useblocknotes#readme",
+  "bugs": {
+    "url": "https://github.com/SebastianUrdaneguiBisalaya/useblocknotes/issues"
+  },
+  "module": "index.ts",
   "workspaces": {
     "packages": [
       "packages/*"
@@ -22,7 +45,8 @@
       "react": "19.3.1",
       "react-dom": "19.3.1",
       "tsup": "8.5.1",
-      "typescript": "6.0.3"
+      "typescript": "6.0.3",
+      "zod": "4.6.7"
     }
   },
   "devDependencies": {
