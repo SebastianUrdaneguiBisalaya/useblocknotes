@@ -5,6 +5,7 @@ import { Playground } from "../playground.js";
 const meta = {
   args: {
     aiMode: "popover",
+    customUi: false,
     editable: true,
     locale: "en",
     onAiError: fn(),
@@ -51,6 +52,16 @@ export const AiChatBar: Story = {
 export const PdfExport: Story = {
   args: {
     pdf: true,
+  },
+};
+
+/**
+ * Custom slash menu, AI popover and "Ask AI" button passed with the
+ * `components` prop. The editor keeps the logic and positioning.
+ */
+export const CustomUi: Story = {
+  args: {
+    customUi: true,
   },
 };
 

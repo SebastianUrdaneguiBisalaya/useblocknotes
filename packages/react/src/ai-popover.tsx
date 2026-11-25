@@ -1,27 +1,28 @@
-import {
-  autoUpdate,
-  computePosition,
-  flip,
-  offset,
-  shift,
-  type VirtualElement,
-} from "@floating-ui/dom";
 import type { Editor } from "@tiptap/core";
-import { type ReactNode, useLayoutEffect, useRef } from "react";
+import { type ComponentType, type ReactNode, useMemo } from "react";
 import {
   AiComposer,
   AiStatusLine,
   escapeHandler,
   join,
 } from "./ai-controls.js";
+import {
+  type FloatingProps,
+  type FloatingReference,
+  useFloating,
+} from "./floating.js";
 import { useMessages } from "./messages.js";
 import type { AiController } from "./use-ai.js";
 
-/** Props of the AI popover. */
+/** Props of an AI popover component (see `components.aiPopover`). */
 export interface AiPopoverProps {
+  /** AI state and actions of the editor. */
   readonly ai: AiController;
-  readonly tiptap: Editor | null;
-  /** Class of the popover (`.bn-ai-popover`). */
+  /** Below the last AI block while a batch is pending, else the cursor. */
+  readonly reference: FloatingReference;
+  /** Spread on the root element to let the editor position it. */
+  readonly floating: FloatingProps;
+  /** The `aiPopoverClassName` prop of `<BlockNotesEditor />`. */
   readonly className?: string | undefined;
 }
 
@@ -29,7 +30,7 @@ export interface AiPopoverProps {
  * Anchors below the last AI block while a batch is pending, else below the
  * cursor.
  */
-function anchor(tiptap: Editor): VirtualElement {
+function anchor(tiptap: Editor): FloatingReference {
   const { view } = tiptap;
   return {
     contextElement: view.dom,
@@ -40,72 +41,33 @@ function anchor(tiptap: Editor): VirtualElement {
         return last.getBoundingClientRect();
       }
       const coords = view.coordsAtPos(view.state.selection.to);
-      return {
-        bottom: coords.bottom,
-        height: coords.bottom - coords.top,
-        left: coords.left,
-        right: coords.left,
-        top: coords.top,
-        width: 0,
-        x: coords.left,
-        y: coords.top,
-      };
+      return new DOMRect(
+        coords.left,
+        coords.top,
+        0,
+        coords.bottom - coords.top,
+      );
     },
   };
 }
 
-/** @internal The AI prompt in a popover next to the cursor. */
+/**
+ * The built-in AI popover: the instruction input while idle, then the status
+ * with Stop, Accept and Discard. Uses the `bn-ai-*` classes.
+ */
 export function AiPopover({
   ai,
   className,
-  tiptap,
+  floating,
 }: AiPopoverProps): ReactNode {
   const messages = useMessages().ai;
-  const popoverRef = useRef<HTMLElement>(null);
-
-  useLayoutEffect(() => {
-    const popover = popoverRef.current;
-    if (tiptap === null || popover === null) {
-      return;
-    }
-    const reference = anchor(tiptap);
-    const update = () => {
-      void computePosition(reference, popover, {
-        middleware: [
-          offset(8),
-          flip(),
-          shift({
-            padding: 8,
-          }),
-        ],
-        placement: "bottom-start",
-        strategy: "fixed",
-      }).then(({ x, y }) => {
-        popover.style.left = `${x}px`;
-        popover.style.top = `${y}px`;
-      });
-    };
-    const stop = autoUpdate(reference, popover, update);
-    // Streamed text moves the anchor without scrolling or resizing.
-    tiptap.on("transaction", update);
-    return () => {
-      stop();
-      tiptap.off("transaction", update);
-    };
-  }, [
-    tiptap,
-  ]);
-
   return (
     <section
+      {...floating}
       aria-label={messages.label}
       className={join("bn-ai-popover", className)}
       data-bn-ai-status={ai.status}
       onKeyDown={escapeHandler(ai)}
-      ref={popoverRef}
-      style={{
-        position: "fixed",
-      }}
     >
       {ai.status === "idle" ? (
         <AiComposer
@@ -117,5 +79,35 @@ export function AiPopover({
         <AiStatusLine ai={ai} />
       )}
     </section>
+  );
+}
+
+/** @internal Positions and renders the AI popover component. */
+export function AiPopoverHost({
+  ai,
+  className,
+  component: Component,
+  tiptap,
+}: {
+  readonly ai: AiController;
+  readonly className: string | undefined;
+  readonly component: ComponentType<AiPopoverProps>;
+  readonly tiptap: Editor;
+}): ReactNode {
+  const reference = useMemo(
+    () => anchor(tiptap),
+    [
+      tiptap,
+    ],
+  );
+  // Streamed text moves the anchor without scrolling or resizing.
+  const floating = useFloating(reference, "bottom-start", tiptap);
+  return (
+    <Component
+      ai={ai}
+      className={className}
+      floating={floating}
+      reference={reference}
+    />
   );
 }

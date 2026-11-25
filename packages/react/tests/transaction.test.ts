@@ -13,6 +13,7 @@ import * as z from "zod";
 import { defaultBlocks } from "../src/blocks.js";
 import { documentToJSON, nodeToDocument } from "../src/convert.js";
 import { createExtensions } from "../src/extensions.js";
+import { createSlashMenuStore } from "../src/slash-menu.js";
 import { applyOperationsToTransaction } from "../src/transaction.js";
 
 const chart = defineBlock({
@@ -48,6 +49,7 @@ const registry = createRegistry<ReactNode>({
 const schema = getSchema(
   createExtensions(registry, {
     messages: () => enMessages,
+    slashMenu: createSlashMenuStore(),
   }),
 );
 

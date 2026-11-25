@@ -13,6 +13,7 @@ import { defaultBlocks } from "../src/blocks.js";
 import { documentToJSON, nodeToDocument, TITLE_NODE } from "../src/convert.js";
 import { createExtensions } from "../src/extensions.js";
 import { handleEnter } from "../src/lists.js";
+import { createSlashMenuStore } from "../src/slash-menu.js";
 
 // Registered first, so a plain ProseMirror split would create it on Enter.
 const subtitle = defineBlock({
@@ -32,6 +33,7 @@ const registry = createRegistry<ReactNode>({
 const schema = getSchema(
   createExtensions(registry, {
     messages: () => enMessages,
+    slashMenu: createSlashMenuStore(),
   }),
 );
 
