@@ -17,6 +17,12 @@ export type { Placeholders } from "./extensions.js";
 export type { SlashMenuMessages } from "./slash-menu.js";
 export type { ReactBlockDefinition, ReactInlineDefinition } from "./types.js";
 export type {
+  AiController,
+  AiMessages,
+  AiOptions,
+  AiStatus,
+} from "./use-ai.js";
+export type {
   BlockNotesInstance,
   ChangeMeta,
   UseBlockNotesOptions,

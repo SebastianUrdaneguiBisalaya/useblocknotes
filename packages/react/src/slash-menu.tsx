@@ -110,6 +110,25 @@ export function blockSlashItems(
   );
 }
 
+/** Slash entry that removes the typed `/query` and opens the AI prompt. */
+export function aiSlashItem(label: string, ask: () => void): SlashItem {
+  return {
+    icon: "AI",
+    key: "ai",
+    keywords: [
+      "ai",
+      "assistant",
+      "generate",
+      "write",
+    ],
+    label,
+    run: (editor: Editor, range: Range) => {
+      editor.chain().focus().deleteRange(range).run();
+      ask();
+    },
+  };
+}
+
 /** Items matching `query` in label or keywords; label prefix matches first. */
 export function filterSlashItems(
   items: readonly SlashItem[],

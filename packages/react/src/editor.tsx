@@ -1,5 +1,7 @@
 import { EditorContent } from "@tiptap/react";
 import type { ReactNode } from "react";
+import { AiPrompt } from "./ai-prompt.js";
+import { AskAiButton } from "./ask-ai-button.js";
 import type { BlockNotesInstance } from "./use-block-notes.js";
 
 /** Props of `<BlockNotesEditor />`. */
@@ -10,6 +12,10 @@ export interface BlockNotesEditorProps {
   readonly className?: string;
   /** Class of the editable content element (`.bn-content`). */
   readonly contentClassName?: string;
+  /** Class of the AI prompt (`.bn-ai-prompt`). */
+  readonly aiPromptClassName?: string;
+  /** Class of the floating "Ask AI" button (`.bn-ask-ai`). */
+  readonly askAiClassName?: string;
 }
 
 function join(base: string, extra: string | undefined): string {
@@ -28,6 +34,8 @@ function join(base: string, extra: string | undefined): string {
  * ```
  */
 export function BlockNotesEditor({
+  aiPromptClassName,
+  askAiClassName,
   className,
   contentClassName,
   editor,
@@ -41,6 +49,19 @@ export function BlockNotesEditor({
         className={join("bn-content", contentClassName)}
         editor={editor.tiptap}
       />
+      {editor.ai.enabled ? (
+        <AskAiButton
+          ai={editor.ai}
+          className={askAiClassName}
+          tiptap={editor.tiptap}
+        />
+      ) : null}
+      {editor.ai.open ? (
+        <AiPrompt
+          ai={editor.ai}
+          className={aiPromptClassName}
+        />
+      ) : null}
     </div>
   );
 }

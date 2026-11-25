@@ -18,6 +18,7 @@ import { createExtensions, type Placeholders } from "./extensions.js";
 import type { SlashMenuMessages } from "./slash-menu.js";
 import { applyOperationsToTransaction } from "./transaction.js";
 import type { ReactBlockDefinition, ReactInlineDefinition } from "./types.js";
+import { type AiController, type AiOptions, useAi } from "./use-ai.js";
 
 /** Thrown by `useBlockNotes()` when `initialDocument` fails validation. */
 export class InvalidDocumentError extends Error {
@@ -32,7 +33,7 @@ export class InvalidDocumentError extends Error {
 }
 
 /** Options of `useBlockNotes()`. Read once, on mount, except `editable`. */
-export interface UseBlockNotesOptions {
+export interface UseBlockNotesOptions extends AiOptions {
   /** Block types. Defaults to `defaultBlocks` (paragraph and headings). */
   readonly blocks?: readonly ReactBlockDefinition[];
   /** Custom inline element types. */
@@ -78,7 +79,12 @@ export interface BlockNotesInstance {
   readonly tiptap: Editor | null;
   /** Registered block and inline types. */
   readonly registry: BlockRegistry<ReactNode>;
-  /** Returns the current document. */
+  /** AI state and actions. */
+  readonly ai: AiController;
+  /**
+   * Returns the current document. While an AI batch is pending, returns the
+   * document without it.
+   */
   getDocument(): BlockNotesDocument;
   /** Emits pending changes to `onChange` now instead of waiting. */
   flushChanges(): void;
@@ -97,6 +103,8 @@ const EMPTY_DOCUMENT: BlockNotesDocument = {
 };
 
 const DEFAULT_DEBOUNCE_MS = 500;
+
+const DEFAULT_ASK_AI = "Ask AI";
 
 const DEFAULT_SLASH_MENU: SlashMenuMessages = {
   empty: "No results",
@@ -124,6 +132,10 @@ export function useBlockNotes(
   options: UseBlockNotesOptions = {},
 ): BlockNotesInstance {
   const { editable = true } = options;
+  // Set by `useAi()`; read by the slash entry and the `Mod-J` shortcut.
+  const askAiRef = useRef<() => void>(() => {});
+  // Document without the pending AI batch, while there is one.
+  const aiBaseRef = useRef<BlockNotesDocument | null>(null);
   const [setup] = useState(() => {
     const registry = createRegistry<ReactNode>({
       blocks: options.blocks ?? defaultBlocks,
@@ -139,6 +151,13 @@ export function useBlockNotes(
     return {
       document: validated.value,
       extensions: createExtensions(registry, {
+        ai:
+          options.ai === undefined
+            ? null
+            : {
+                ask: () => askAiRef.current(),
+                label: options.aiMessages?.askAi ?? DEFAULT_ASK_AI,
+              },
         placeholders: {
           ...DEFAULT_PLACEHOLDERS,
           ...options.placeholders,
@@ -187,7 +206,7 @@ export function useBlockNotes(
         clearTimeout(timer);
         timer = null;
       }
-      const current = nodeToDocument(tiptap.state.doc);
+      const current = aiBaseRef.current ?? nodeToDocument(tiptap.state.doc);
       const operations = diffDocuments(saved, current);
       if (operations.length === 0) {
         return;
@@ -217,24 +236,37 @@ export function useBlockNotes(
     tiptap,
   ]);
 
+  const ai = useAi(tiptap, setup.registry, options, aiBaseRef);
   useEffect(() => {
-    if (tiptap !== null && tiptap.isEditable !== editable) {
-      tiptap.setEditable(editable);
+    askAiRef.current = ai.ask;
+  }, [
+    ai.ask,
+  ]);
+
+  // Read-only while an AI batch is pending.
+  const isEditable = editable && ai.status === "idle";
+  useEffect(() => {
+    if (tiptap !== null && tiptap.isEditable !== isEditable) {
+      tiptap.setEditable(isEditable);
     }
   }, [
     tiptap,
-    editable,
+    isEditable,
   ]);
 
   return useMemo<BlockNotesInstance>(
     () => ({
+      ai,
       applyOperations(operations) {
-        if (tiptap === null) {
+        if (tiptap === null || aiBaseRef.current !== null) {
           return {
             error: {
               code: "invalid_operation",
               index: 0,
-              message: "The editor is not mounted yet",
+              message:
+                tiptap === null
+                  ? "The editor is not mounted yet"
+                  : "An AI batch is pending: accept or reject it first",
               path: [],
             },
             ok: false,
@@ -255,12 +287,13 @@ export function useBlockNotes(
       getDocument() {
         return tiptap === null
           ? setup.document
-          : nodeToDocument(tiptap.state.doc);
+          : (aiBaseRef.current ?? nodeToDocument(tiptap.state.doc));
       },
       registry: setup.registry,
       tiptap,
     }),
     [
+      ai,
       tiptap,
       setup,
     ],
