@@ -46,6 +46,7 @@
         "default": "./dist/index.cjs"
       }
     },
+    "./styles.css": "./dist/styles.css",
     "./package.json": "./package.json"
   },
   "files": [
@@ -53,7 +54,9 @@
     "LICENSE",
     "README.md"
   ],
-  "sideEffects": false,
+  "sideEffects": [
+    "*.css"
+  ],
   "scripts": {
     "build": "tsup",
     "dev": "tsup --watch",
@@ -75,7 +78,9 @@
   },
   "peerDependencies": {
     "@useblocknotes/core": "workspace:^",
-    "react": ">=18"
+    "react": "^19",
+    "react-dom": "^19",
+    "zod": "^4"
   },
   "devDependencies": {
     "@happy-dom/global-registrator": "catalog:",
@@ -88,6 +93,21 @@
     "react": "catalog:",
     "react-dom": "catalog:",
     "tsup": "catalog:",
-    "typescript": "catalog:"
+    "typescript": "catalog:",
+    "zod": "catalog:"
+  },
+  "dependencies": {
+    "@tiptap/core": "3.35.0",
+    "@tiptap/extension-bold": "3.35.0",
+    "@tiptap/extension-code": "3.35.0",
+    "@tiptap/extension-document": "3.35.0",
+    "@tiptap/extension-italic": "3.35.0",
+    "@tiptap/extension-link": "3.35.0",
+    "@tiptap/extension-strike": "3.35.0",
+    "@tiptap/extension-text": "3.35.0",
+    "@tiptap/extension-underline": "3.35.0",
+    "@tiptap/extensions": "3.35.0",
+    "@tiptap/pm": "3.35.0",
+    "@tiptap/react": "3.35.0"
   }
 }

@@ -39,6 +39,9 @@
     },
     "enabled": true,
     "rules": {
+      "complexity": {
+        "useLiteralKeys": "off"
+      },
       "preset": "recommended",
       "suspicious": {
         "noConfusingVoidType": "off",
