@@ -14,6 +14,7 @@ import {
   escapeHandler,
   join,
 } from "./ai-controls.js";
+import { useMessages } from "./messages.js";
 import type { AiController } from "./use-ai.js";
 
 /** Props of the AI popover. */
@@ -59,6 +60,7 @@ export function AiPopover({
   className,
   tiptap,
 }: AiPopoverProps): ReactNode {
+  const messages = useMessages().ai;
   const popoverRef = useRef<HTMLElement>(null);
 
   useLayoutEffect(() => {
@@ -96,7 +98,7 @@ export function AiPopover({
 
   return (
     <section
-      aria-label={ai.messages.label}
+      aria-label={messages.label}
       className={join("bn-ai-popover", className)}
       data-bn-ai-status={ai.status}
       onKeyDown={escapeHandler(ai)}

@@ -12,6 +12,7 @@ import {
 } from "@useblocknotes/core";
 import type { CSSProperties, ReactNode } from "react";
 import { useBlockView } from "./context.js";
+import { useMessages } from "./messages.js";
 import type { ReactBlockDefinition } from "./types.js";
 
 /** Element that wraps a block's editable inline content. */
@@ -140,13 +141,14 @@ function CodeBlock({
   editable,
   updateProps,
 }: BlockRenderProps): ReactNode {
+  const messages = useMessages().code;
   const language = block.props["language"];
   const value = typeof language === "string" ? language : "";
   return (
     <div className="bn-code">
       {editable ? (
         <input
-          aria-label="Code language"
+          aria-label={messages.language}
           className="bn-code-language"
           contentEditable={false}
           onChange={(event) =>
@@ -155,7 +157,7 @@ function CodeBlock({
               language: event.target.value,
             })
           }
-          placeholder="Language"
+          placeholder={messages.languagePlaceholder}
           value={value}
         />
       ) : value === "" ? null : (

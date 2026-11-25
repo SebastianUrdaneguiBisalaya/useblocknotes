@@ -4,6 +4,7 @@ import { AiChatBar } from "./ai-chat-bar.js";
 import { join } from "./ai-controls.js";
 import { AiPopover } from "./ai-popover.js";
 import { AskAiButton } from "./ask-ai-button.js";
+import { MessagesContext } from "./messages.js";
 import type { BlockNotesInstance } from "./use-block-notes.js";
 
 /**
@@ -54,34 +55,36 @@ export function BlockNotesEditor({
   editor,
 }: BlockNotesEditorProps): ReactNode {
   return (
-    <div
-      className={join("bn-root", className)}
-      data-bn-root=""
-    >
-      <EditorContent
-        className={join("bn-content", contentClassName)}
-        editor={editor.tiptap}
-      />
-      {editor.ai.enabled ? (
-        <AskAiButton
-          ai={editor.ai}
-          className={askAiClassName}
-          tiptap={editor.tiptap}
+    <MessagesContext value={editor.messages}>
+      <div
+        className={join("bn-root", className)}
+        data-bn-root=""
+      >
+        <EditorContent
+          className={join("bn-content", contentClassName)}
+          editor={editor.tiptap}
         />
-      ) : null}
-      {editor.ai.enabled && aiMode === "chat" ? (
-        <AiChatBar
-          ai={editor.ai}
-          className={aiChatClassName}
-        />
-      ) : null}
-      {editor.ai.open && aiMode === "popover" ? (
-        <AiPopover
-          ai={editor.ai}
-          className={aiPopoverClassName}
-          tiptap={editor.tiptap}
-        />
-      ) : null}
-    </div>
+        {editor.ai.enabled ? (
+          <AskAiButton
+            ai={editor.ai}
+            className={askAiClassName}
+            tiptap={editor.tiptap}
+          />
+        ) : null}
+        {editor.ai.enabled && aiMode === "chat" ? (
+          <AiChatBar
+            ai={editor.ai}
+            className={aiChatClassName}
+          />
+        ) : null}
+        {editor.ai.open && aiMode === "popover" ? (
+          <AiPopover
+            ai={editor.ai}
+            className={aiPopoverClassName}
+            tiptap={editor.tiptap}
+          />
+        ) : null}
+      </div>
+    </MessagesContext>
   );
 }

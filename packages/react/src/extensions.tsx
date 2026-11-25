@@ -31,6 +31,7 @@ import {
   type BlockRegistry,
   createBlockId,
   type JsonValue,
+  type Messages,
 } from "@useblocknotes/core";
 import type { ReactNode } from "react";
 import type { $ZodType } from "zod/v4/core";
@@ -40,21 +41,8 @@ import { BlockViewContext } from "./context.js";
 import { BLOCK_GROUP, nodeToBlock, TITLE_NODE } from "./convert.js";
 import { BlockKeymap, ListNumbers, listNumberOf } from "./lists.js";
 import { BlockMove, DragHandle } from "./move.js";
-import {
-  aiSlashItem,
-  blockSlashItems,
-  createSlashMenu,
-  type SlashMenuMessages,
-} from "./slash-menu.js";
+import { aiSlashItem, blockSlashItems, createSlashMenu } from "./slash-menu.js";
 import type { ReactBlockDefinition, ReactInlineDefinition } from "./types.js";
-
-/** Placeholder texts shown in empty nodes. */
-export interface Placeholders {
-  /** Shown in the empty title. */
-  readonly title: string;
-  /** Shown in the empty block that has the cursor. */
-  readonly block: string;
-}
 
 /** Props when the schema accepts `{}`, else `{}` (validated on insert). */
 function defaultProps(schema: $ZodType<BlockProps>): BlockProps {
@@ -352,16 +340,14 @@ const BlockIds = Extension.create({
 
 /** Options of {@link createExtensions}. */
 export interface ExtensionOptions {
-  readonly placeholders: Placeholders;
-  readonly slashMenu: SlashMenuMessages;
+  /** Current UI messages; read each time a text is shown. */
+  messages(): Messages;
   /** AI entry points (`/ai` and `Mod-J`), or `null` without an adapter. */
   readonly ai?: AiEntry | null;
 }
 
 /** Opens the AI prompt from the slash menu and the keyboard. */
 export interface AiEntry {
-  /** Label of the slash entry. */
-  readonly label: string;
   /** Opens the AI prompt for the current selection. */
   ask(): void;
 }
@@ -385,7 +371,7 @@ export function createExtensions(
   registry: BlockRegistry<ReactNode>,
   options: ExtensionOptions,
 ): Extensions {
-  const { placeholders } = options;
+  const { messages } = options;
   const ai = options.ai ?? null;
   return [
     Document.extend({
@@ -414,9 +400,9 @@ export function createExtensions(
     Placeholder.configure({
       placeholder: ({ hasAnchor, node }) => {
         if (node.type.name === TITLE_NODE) {
-          return placeholders.title;
+          return messages().placeholders.title;
         }
-        return hasAnchor ? placeholders.block : "";
+        return hasAnchor ? messages().placeholders.block : "";
       },
       showOnlyCurrent: false,
     }),
@@ -425,14 +411,14 @@ export function createExtensions(
     BlockKeymap,
     BlockMove,
     createSlashMenu({
-      items:
+      items: () =>
         ai === null
-          ? blockSlashItems(registry)
+          ? blockSlashItems(registry, messages())
           : [
-              aiSlashItem(ai.label, ai.ask),
-              ...blockSlashItems(registry),
+              aiSlashItem(messages().ai.askAi, ai.ask),
+              ...blockSlashItems(registry, messages()),
             ],
-      messages: options.slashMenu,
+      messages: () => messages().slashMenu,
     }),
     AiHighlightExtension,
     ...(ai === null
