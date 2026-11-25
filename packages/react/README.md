@@ -2,6 +2,49 @@
 
 React 19 components and hooks for useblocknotes.
 
+## Light and dark themes
+
+The optional base styles (`import "@useblocknotes/react/styles.css"`) include a light and a dark theme. Every color uses CSS [`light-dark()`](https://developer.mozilla.org/docs/Web/CSS/color_value/light-dark), so it follows the `color-scheme` of `.bn-root`. This needs Chrome 123+, Safari 17.5+ or Firefox 120+.
+
+The theme is chosen in this order:
+
+1. The `theme` prop: `"light"` or `"dark"` sets `data-bn-theme` on `.bn-root` and forces that theme.
+2. With `theme="system"` (the default), the `--bn-color-scheme` variable on `.bn-root` or an ancestor, for example `dark` or `light`.
+3. Otherwise the operating system preference (`prefers-color-scheme`).
+
+```tsx
+<BlockNotesEditor editor={editor} theme={isDark ? "dark" : "light"} />
+```
+
+```css
+/* Or follow your app's own dark mode class */
+.dark {
+  --bn-color-scheme: dark;
+}
+```
+
+The editor paints its own background (`--bn-background`). Set `--bn-background: transparent` to show the page behind it.
+
+Override any color for both themes with `light-dark()`, or with a single value for both:
+
+```css
+.bn-root {
+  --bn-accent-color: light-dark(#7c3aed, #a78bfa);
+}
+```
+
+| Variable | Light | Dark |
+| --- | --- | --- |
+| `--bn-text-color` | `#18181b` | `#f4f4f5` |
+| `--bn-background` | `#ffffff` | `#18181b` |
+| `--bn-accent-color` | `#2563eb` | `#60a5fa` |
+| `--bn-accent-contrast` (text on the accent) | `#ffffff` | `#0b1220` |
+| `--bn-error-color` | `#dc2626` | `#f87171` |
+| `--bn-menu-background` | `#ffffff` | `#27272a` |
+| `--bn-menu-shadow` | `0 8px 24px rgb(0 0 0 / 12%)` | `0 8px 24px rgb(0 0 0 / 48%)` |
+
+Muted text, borders, hover and code backgrounds are mixed from the text or accent color, so they follow the theme too (`--bn-muted-color`, `--bn-code-background`, `--bn-menu-border-color`, `--bn-menu-active-background`, `--bn-ai-highlight`, `--bn-ai-message-background`). `--bn-menu-color` defaults to `--bn-text-color` and `--bn-ai-error-color` to `--bn-error-color`.
+
 ## Keyboard shortcuts
 
 Every shortcut can be changed or turned off with the `shortcuts` option of `useBlockNotes()`, read once on mount. Pass `false` to turn them all off, or an object to change only some actions: one key, several keys, or `false` for none.

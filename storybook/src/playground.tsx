@@ -12,6 +12,7 @@ import {
   type BlockNotesComponents,
   BlockNotesEditor,
   type BlockNotesInstance,
+  type BlockNotesTheme,
   useBlockNotes,
 } from "@useblocknotes/react";
 import { type ReactNode, useEffect, useState } from "react";
@@ -39,6 +40,8 @@ export interface PlaygroundProps {
    * `editor.commands`. Read on mount.
    */
   readonly externalHotkeys: boolean;
+  /** Color theme of the base styles. */
+  readonly theme: BlockNotesTheme;
   readonly onChange: (
     operations: readonly Operation[],
     document: BlockNotesDocument,
@@ -54,6 +57,7 @@ export function Playground({
   customUi,
   externalHotkeys,
   pdf,
+  theme,
   ...options
 }: PlaygroundProps): ReactNode {
   const editor = useBlockNotes({
@@ -68,12 +72,16 @@ export function Playground({
     initialDocument: sampleDocument,
   });
   return (
-    <div className="sb-playground">
+    <div
+      className="sb-playground"
+      data-sb-theme={theme}
+    >
       {externalHotkeys ? <ExternalHotkeys editor={editor} /> : null}
       <BlockNotesEditor
         aiMode={aiMode}
         components={customUi ? customComponents : NO_COMPONENTS}
         editor={editor}
+        theme={theme}
       />
       {pdf ? (
         <PdfPanel
