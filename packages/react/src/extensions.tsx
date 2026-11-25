@@ -35,11 +35,13 @@ import {
 import type { ReactNode } from "react";
 import type { $ZodType } from "zod/v4/core";
 import { safeParse } from "zod/v4/core";
+import { AiHighlightExtension } from "./ai-session.js";
 import { BlockViewContext } from "./context.js";
 import { BLOCK_GROUP, nodeToBlock, TITLE_NODE } from "./convert.js";
 import { BlockKeymap, ListNumbers, listNumberOf } from "./lists.js";
 import { BlockMove, DragHandle } from "./move.js";
 import {
+  aiSlashItem,
   blockSlashItems,
   createSlashMenu,
   type SlashMenuMessages,
@@ -352,6 +354,30 @@ const BlockIds = Extension.create({
 export interface ExtensionOptions {
   readonly placeholders: Placeholders;
   readonly slashMenu: SlashMenuMessages;
+  /** AI entry points (`/ai` and `Mod-J`), or `null` without an adapter. */
+  readonly ai?: AiEntry | null;
+}
+
+/** Opens the AI prompt from the slash menu and the keyboard. */
+export interface AiEntry {
+  /** Label of the slash entry. */
+  readonly label: string;
+  /** Opens the AI prompt for the current selection. */
+  ask(): void;
+}
+
+function aiShortcut(entry: AiEntry): AnyExtension {
+  return Extension.create({
+    addKeyboardShortcuts() {
+      return {
+        "Mod-j": () => {
+          entry.ask();
+          return true;
+        },
+      };
+    },
+    name: "blockNotesAiShortcut",
+  });
 }
 
 /** Builds the Tiptap extensions for a registry. */
@@ -360,6 +386,7 @@ export function createExtensions(
   options: ExtensionOptions,
 ): Extensions {
   const { placeholders } = options;
+  const ai = options.ai ?? null;
   return [
     Document.extend({
       content: `${TITLE_NODE} ${BLOCK_GROUP}*`,
@@ -398,8 +425,20 @@ export function createExtensions(
     BlockKeymap,
     BlockMove,
     createSlashMenu({
-      items: blockSlashItems(registry),
+      items:
+        ai === null
+          ? blockSlashItems(registry)
+          : [
+              aiSlashItem(ai.label, ai.ask),
+              ...blockSlashItems(registry),
+            ],
       messages: options.slashMenu,
     }),
+    AiHighlightExtension,
+    ...(ai === null
+      ? []
+      : [
+          aiShortcut(ai),
+        ]),
   ];
 }

@@ -379,6 +379,7 @@ describe("processAiStream", () => {
 
     const result = await processAiStream(
       adapter({
+        anchorBlockId: null,
         context: "",
         instruction: "Write",
         selection: null,

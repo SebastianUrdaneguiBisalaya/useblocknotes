@@ -69,6 +69,11 @@ export interface AiRequest {
   readonly instruction: string;
   /** The selection the request applies to, or `null` when there is none. */
   readonly selection: AiSelection | null;
+  /**
+   * Block that had the cursor when the request was opened, or `null`. New
+   * content usually goes after it.
+   */
+  readonly anchorBlockId: string | null;
   /** Document context for the model, for example an outline or Markdown. */
   readonly context: string;
   /** Aborted when the user cancels. Pass it to the AI provider call. */
@@ -367,7 +372,7 @@ function step<TNode>(
  * ```ts
  * const controller = new AbortController();
  * const result = await processAiStream(
- *   adapter({ instruction, selection: null, context, signal: controller.signal }),
+ *   adapter({ instruction, selection: null, anchorBlockId: null, context, signal: controller.signal }),
  *   { document, registry, signal: controller.signal, onUpdate: render },
  * );
  * if (result.ok) accept(result.value.operations);
