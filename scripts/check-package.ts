@@ -143,7 +143,7 @@ async function checkPackage(dir: string, outDir: string): Promise<boolean> {
   return problems.length === 0 && publint.ok && attw.ok;
 }
 
-const outDir = await mkdtemp(join(tmpdir(), "usesounds-check-package-"));
+const outDir = await mkdtemp(join(tmpdir(), "useblocknotes-check-package-"));
 let ok = true;
 try {
   const entries = await readdir(PACKAGES_DIR, {

@@ -1,9 +1,24 @@
 {
   "name": "@useblocknotes/core",
   "version": "0.1.0",
-  "description": "",
-  "keywords": [],
-  "license": "ISC",
+  "description": "Framework-agnostic core of useblocknotes: document model, block registry, operations, AI stream protocol and context functions.",
+  "keywords": [
+    "notion",
+    "block-editor",
+    "editor",
+    "rich-text",
+    "tiptap",
+    "prosemirror",
+    "ai",
+    "streaming",
+    "typescript",
+    "blocks",
+    "document-model",
+    "operations",
+    "zod",
+    "framework-agnostic"
+  ],
+  "license": "MIT",
   "author": {
     "name": "Sebastian Marat Urdanegui Bisalaya",
     "url": "https://sebastianurdanegui.com"
@@ -63,6 +78,10 @@
     "@happy-dom/global-registrator": "catalog:",
     "@types/bun": "catalog:",
     "tsup": "catalog:",
-    "typescript": "catalog:"
+    "typescript": "catalog:",
+    "zod": "catalog:"
+  },
+  "peerDependencies": {
+    "zod": "^4"
   }
 }

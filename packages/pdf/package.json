@@ -1,0 +1,79 @@
+{
+  "name": "@useblocknotes/pdf",
+  "version": "0.1.0",
+  "description": "Local PDF export for useblocknotes documents, with no external services.",
+  "keywords": [
+    "useblocknotes",
+    "pdf",
+    "pdf-export",
+    "react-pdf",
+    "notion",
+    "block-editor",
+    "typescript"
+  ],
+  "license": "MIT",
+  "author": {
+    "name": "Sebastian Marat Urdanegui Bisalaya",
+    "url": "https://sebastianurdanegui.com"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/SebastianUrdaneguiBisalaya/useblocknotes.git",
+    "directory": "packages/pdf"
+  },
+  "homepage": "https://github.com/SebastianUrdaneguiBisalaya/useblocknotes/tree/main/packages/pdf#readme",
+  "bugs": {
+    "url": "https://github.com/SebastianUrdaneguiBisalaya/useblocknotes/issues"
+  },
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.mjs"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
+      }
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "LICENSE",
+    "README.md"
+  ],
+  "sideEffects": false,
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "typecheck": "tsc --noEmit",
+    "test": "bun test --pass-with-no-tests",
+    "test:watch": "bun test --watch",
+    "prepublishOnly": "bun run typecheck && bun run test && bun run build"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
+  "devEngines": {
+    "packageManager": {
+      "name": "bun",
+      "version": "1.4.2",
+      "onFail": "warn"
+    }
+  },
+  "peerDependencies": {
+    "@useblocknotes/core": "workspace:^"
+  },
+  "devDependencies": {
+    "@types/bun": "catalog:",
+    "@useblocknotes/core": "workspace:^",
+    "tsup": "catalog:",
+    "typescript": "catalog:"
+  }
+}

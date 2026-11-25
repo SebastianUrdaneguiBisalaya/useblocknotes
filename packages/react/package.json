@@ -1,9 +1,23 @@
 {
   "name": "@useblocknotes/react",
   "version": "0.1.0",
-  "description": "",
-  "keywords": [],
-  "license": "ISC",
+  "description": "React 19 components and hooks for useblocknotes: a Notion-style block editor on Tiptap with live AI streaming.",
+  "keywords": [
+    "notion",
+    "block-editor",
+    "editor",
+    "rich-text",
+    "tiptap",
+    "prosemirror",
+    "ai",
+    "streaming",
+    "typescript",
+    "react",
+    "react-component",
+    "hooks",
+    "slash-menu"
+  ],
+  "license": "MIT",
   "author": {
     "name": "Sebastian Marat Urdanegui Bisalaya",
     "url": "https://sebastianurdanegui.com"

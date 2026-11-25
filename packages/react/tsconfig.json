@@ -10,7 +10,7 @@
       "DOM.Iterable"
     ],
     // Type-check against core's source so `typecheck` doesn't need core to be built first.
-    // Declarations keep the `@usecalendar/core` specifier, so published types still import the package.
+    // Declarations keep the `@useblocknotes/core` specifier, so published types still import the package.
     "paths": {
       "@useblocknotes/core": [
         "../core/src/index.ts"
