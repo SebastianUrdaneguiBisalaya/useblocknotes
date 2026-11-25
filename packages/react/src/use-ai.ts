@@ -42,7 +42,20 @@ export type AiStatus =
   | "cancelled"
   | "error";
 
-/** Texts of the AI prompt and "Ask AI" button. */
+/** A request in the AI conversation, shown in the chat bar. */
+export interface AiHistoryEntry {
+  /** Unique within the editor. */
+  readonly id: number;
+  readonly instruction: string;
+  /** Selection the request applied to, or `null`. */
+  readonly selection: AiSelection | null;
+  /** Latest status of the request. */
+  readonly status: Exclude<AiStatus, "idle">;
+  /** What the user did with the batch, or `null` while it is pending. */
+  readonly result: "accepted" | "rejected" | null;
+}
+
+/** Texts of the AI prompt, chat bar and "Ask AI" button. */
 export interface AiMessages {
   /** "Ask AI" button and slash menu entry. */
   readonly askAi: string;
@@ -60,6 +73,14 @@ export interface AiMessages {
   readonly done: string;
   readonly cancelled: string;
   readonly error: string;
+  /** Shown on a request whose batch was accepted. */
+  readonly accepted: string;
+  /** Shown on a request whose batch was discarded. */
+  readonly rejected: string;
+  /** Accessible name of the chat history. */
+  readonly history: string;
+  /** Label before the selected text a request applies to. */
+  readonly selection: string;
 }
 
 /** AI options of `useBlockNotes()`. */
@@ -100,11 +121,17 @@ export interface AiController {
   readonly selection: AiSelection | null;
   /** `true` when the pending batch has operations to accept. */
   readonly hasChanges: boolean;
+  /** Requests made in this editor, oldest first. */
+  readonly history: readonly AiHistoryEntry[];
   /** Resolved AI texts. */
   readonly messages: AiMessages;
   /** Opens the prompt for the current editor selection. */
   ask(): void;
-  /** Sends `instruction` to the adapter and streams the result live. */
+  /**
+   * Sends `instruction` to the adapter and streams the result live. Uses the
+   * selection of `ask()`, or the current editor selection if the prompt was
+   * not opened with it.
+   */
   start(instruction: string): void;
   /** Stops the stream. What was written stays pending. */
   cancel(): void;
@@ -112,20 +139,26 @@ export interface AiController {
   accept(): void;
   /** Discards the pending batch and closes the prompt. */
   reject(): void;
+  /** Empties `history`. */
+  clearHistory(): void;
 }
 
 const DEFAULT_MESSAGES: AiMessages = {
   accept: "Accept",
+  accepted: "Accepted",
   askAi: "Ask AI",
   cancel: "Stop",
   cancelled: "Stopped",
   close: "Close",
   done: "Review the changes",
   error: "Something went wrong",
+  history: "AI conversation",
   label: "AI assistant",
   loading: "Thinking…",
   placeholder: "Ask AI to write or edit…",
   reject: "Discard",
+  rejected: "Discarded",
+  selection: "Selection",
   streaming: "Writing…",
   submit: "Generate",
 };
@@ -133,6 +166,7 @@ const DEFAULT_MESSAGES: AiMessages = {
 interface Session {
   readonly base: BlockNotesDocument;
   readonly controller: AbortController;
+  readonly entryId: number;
   latest: AiStreamState | null;
 }
 
@@ -180,6 +214,8 @@ export function useAi(
   baseRef: RefObject<BlockNotesDocument | null>,
 ): AiController {
   const [view, setView] = useState<View>(CLOSED);
+  const [history, setHistory] = useState<readonly AiHistoryEntry[]>([]);
+  const nextEntryId = useRef(0);
   const session = useRef<Session | null>(null);
   const latest = useRef(options);
   useEffect(() => {
@@ -214,6 +250,21 @@ export function useAi(
   );
 
   const actions = useMemo(() => {
+    const track = (
+      id: number,
+      patch: Partial<Pick<AiHistoryEntry, "status" | "result">>,
+    ) =>
+      setHistory((entries) =>
+        entries.map((entry) =>
+          entry.id === id
+            ? {
+                ...entry,
+                ...patch,
+              }
+            : entry,
+        ),
+      );
+
     const finish = (accept: boolean) => {
       const current = session.current;
       if (current !== null && tiptap !== null) {
@@ -221,11 +272,16 @@ export function useAi(
         session.current = null;
         baseRef.current = null;
         const operations = current.latest?.operations ?? [];
-        if (accept && operations.length > 0) {
-          acceptAiPreview(tiptap.view, current.base, operations, registry);
-        } else {
+        const accepted =
+          accept &&
+          operations.length > 0 &&
+          acceptAiPreview(tiptap.view, current.base, operations, registry).ok;
+        if (!accepted) {
           rejectAiPreview(tiptap.view, current.base);
         }
+        track(current.entryId, {
+          result: accepted ? "accepted" : "rejected",
+        });
       }
       setView(CLOSED);
       tiptap?.commands.focus();
@@ -246,6 +302,7 @@ export function useAi(
         });
       },
       cancel: () => session.current?.controller.abort(),
+      clearHistory: () => setHistory([]),
       reject: () => finish(false),
       start: (instruction: string, from: View) => {
         const adapter = latest.current.ai;
@@ -257,11 +314,19 @@ export function useAi(
         ) {
           return;
         }
+        const target = from.open
+          ? from
+          : {
+              ...CLOSED,
+              ...readSelection(tiptap.state),
+            };
         const base = nodeToDocument(tiptap.state.doc);
         const controller = new AbortController();
+        const entryId = nextEntryId.current++;
         const current: Session = {
           base,
           controller,
+          entryId,
           latest: null,
         };
         session.current = current;
@@ -269,16 +334,26 @@ export function useAi(
         const isCurrent = () => session.current === current;
 
         const request: AiRequest = {
-          anchorBlockId: from.anchorBlockId,
+          anchorBlockId: target.anchorBlockId,
           context:
-            latest.current.aiContext?.(base, from.selection) ??
+            latest.current.aiContext?.(base, target.selection) ??
             defaultContext(base, registry),
           instruction,
-          selection: from.selection,
+          selection: target.selection,
           signal: controller.signal,
         };
+        setHistory((entries) => [
+          ...entries,
+          {
+            id: entryId,
+            instruction,
+            result: null,
+            selection: target.selection,
+            status: "loading",
+          },
+        ]);
         setView({
-          ...from,
+          ...target,
           error: null,
           hasChanges: false,
           open: true,
@@ -297,6 +372,9 @@ export function useAi(
               ...prev,
               status: "done",
             }));
+            track(entryId, {
+              status: "done",
+            });
             latest.current.onAiFinish?.(result.value);
             return;
           }
@@ -306,8 +384,14 @@ export function useAi(
               ...prev,
               status: "cancelled",
             }));
+            track(entryId, {
+              status: "cancelled",
+            });
             return;
           }
+          track(entryId, {
+            status: "error",
+          });
           setView((prev) => ({
             ...prev,
             error,
@@ -341,6 +425,11 @@ export function useAi(
             if (!isCurrent()) {
               return;
             }
+            if (current.latest === null) {
+              track(entryId, {
+                status: "streaming",
+              });
+            }
             current.latest = state;
             showAiPreview(tiptap.view, state);
             const hasChanges = state.operations.length > 0;
@@ -370,9 +459,11 @@ export function useAi(
       accept: actions.accept,
       ask: actions.ask,
       cancel: actions.cancel,
+      clearHistory: actions.clearHistory,
       enabled,
       error: view.error,
       hasChanges: view.hasChanges,
+      history,
       messages,
       open: view.open,
       reject: actions.reject,
@@ -383,6 +474,7 @@ export function useAi(
     [
       actions,
       enabled,
+      history,
       messages,
       view,
     ],
