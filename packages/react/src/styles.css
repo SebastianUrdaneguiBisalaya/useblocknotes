@@ -150,3 +150,41 @@
   background: none;
   border: none;
 }
+
+.bn-root .bn-block {
+  position: relative;
+}
+
+.bn-root .bn-drag-handle {
+  position: absolute;
+  inset-block-start: 0.25em;
+  inset-inline-start: calc(-1 * var(--bn-drag-handle-offset, 1.5rem));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.25rem;
+  height: 1.5rem;
+  color: var(--bn-muted-color);
+  cursor: grab;
+  user-select: none;
+  border-radius: 0.25rem;
+  opacity: 0;
+  transition: opacity 120ms;
+}
+
+.bn-root .bn-block:hover > .bn-drag-handle,
+.bn-root .bn-drag-handle:focus-visible {
+  opacity: 1;
+}
+
+.bn-root .bn-drag-handle:hover {
+  background: var(--bn-code-background);
+}
+
+.bn-root .bn-drag-handle:active {
+  cursor: grabbing;
+}
+
+.bn-root .ProseMirror {
+  padding-inline-start: var(--bn-drag-handle-offset, 1.5rem);
+}

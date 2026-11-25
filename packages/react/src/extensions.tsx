@@ -38,6 +38,7 @@ import { safeParse } from "zod/v4/core";
 import { BlockViewContext } from "./context.js";
 import { BLOCK_GROUP, nodeToBlock, TITLE_NODE } from "./convert.js";
 import { BlockKeymap, ListNumbers, listNumberOf } from "./lists.js";
+import { BlockMove, DragHandle } from "./move.js";
 import type { ReactBlockDefinition, ReactInlineDefinition } from "./types.js";
 
 /** Placeholder texts shown in empty nodes. */
@@ -132,6 +133,7 @@ function BlockView(
         data-bn-id={block.id}
         data-bn-type={block.type}
       >
+        {editable ? <DragHandle /> : null}
         {body}
       </NodeViewWrapper>
     </BlockViewContext>
@@ -184,6 +186,8 @@ function blockNode(
     atom: !inline,
     content: plainText ? "text*" : inline ? "inline*" : "",
     defining: true,
+    // Dragged by the handle only (see `DragHandle`), never by its content.
+    draggable: true,
     group: BLOCK_GROUP,
     name: definition.type,
     parseHTML() {
@@ -380,5 +384,6 @@ export function createExtensions(
     BlockIds,
     ListNumbers,
     BlockKeymap,
+    BlockMove,
   ];
 }
