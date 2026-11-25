@@ -146,3 +146,17 @@
   border: 0;
   border-radius: 999px;
 }
+
+/* External hotkeys story */
+.sb-hotkeys {
+  padding: 0.75rem 1rem;
+  margin-bottom: 1rem;
+  font-size: 0.875rem;
+  background: #f4f4f5;
+  border-radius: 0.5rem;
+}
+
+.sb-hotkeys ul {
+  padding-left: 1.25rem;
+  margin: 0.5rem 0 0;
+}

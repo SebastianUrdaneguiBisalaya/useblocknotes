@@ -3,8 +3,8 @@ import { type ComponentType, type ReactNode, useMemo } from "react";
 import {
   AiComposer,
   AiStatusLine,
-  escapeHandler,
   join,
+  useCloseHandler,
 } from "./ai-controls.js";
 import {
   type FloatingProps,
@@ -61,13 +61,14 @@ export function AiPopover({
   floating,
 }: AiPopoverProps): ReactNode {
   const messages = useMessages().ai;
+  const onKeyDown = useCloseHandler(ai);
   return (
     <section
       {...floating}
       aria-label={messages.label}
       className={join("bn-ai-popover", className)}
       data-bn-ai-status={ai.status}
-      onKeyDown={escapeHandler(ai)}
+      onKeyDown={onKeyDown}
     >
       {ai.status === "idle" ? (
         <AiComposer

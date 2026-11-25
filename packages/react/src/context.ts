@@ -1,4 +1,5 @@
 import { createContext, useContext } from "react";
+import { type ResolvedShortcuts, resolveShortcuts } from "./shortcuts.js";
 
 /** Per-block view state that renders can read. */
 export interface BlockViewState {
@@ -18,3 +19,8 @@ export const BlockViewContext = createContext<BlockViewState>({
 export function useBlockView(): BlockViewState {
   return useContext(BlockViewContext);
 }
+
+/** @internal Provided by `<BlockNotesEditor />` with the editor's shortcuts. */
+export const ShortcutsContext = createContext<ResolvedShortcuts>(
+  resolveShortcuts(),
+);

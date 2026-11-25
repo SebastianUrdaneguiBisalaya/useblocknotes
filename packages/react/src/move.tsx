@@ -1,4 +1,3 @@
-import { Extension } from "@tiptap/core";
 import {
   NodeSelection,
   type Selection,
@@ -109,16 +108,3 @@ export function moveBlock(tr: Transaction, direction: -1 | 1): boolean {
   tr.scrollIntoView();
   return true;
 }
-
-/** @internal Keyboard alternative to dragging: Mod-Shift-ArrowUp/Down moves a block. */
-export const BlockMove = Extension.create({
-  addKeyboardShortcuts() {
-    return {
-      "Mod-Shift-ArrowDown": () =>
-        this.editor.commands.command(({ tr }) => moveBlock(tr, 1)),
-      "Mod-Shift-ArrowUp": () =>
-        this.editor.commands.command(({ tr }) => moveBlock(tr, -1)),
-    };
-  },
-  name: "blockNotesMove",
-});

@@ -7,6 +7,7 @@ const meta = {
     aiMode: "popover",
     customUi: false,
     editable: true,
+    externalHotkeys: false,
     locale: "en",
     onAiError: fn(),
     onAiFinish: fn(),
@@ -62,6 +63,16 @@ export const PdfExport: Story = {
 export const CustomUi: Story = {
   args: {
     customUi: true,
+  },
+};
+
+/**
+ * Editor shortcuts turned off with `shortcuts: false`, and host hotkeys
+ * (Alt-based) calling `editor.commands`, as a hotkey library would.
+ */
+export const ExternalHotkeys: Story = {
+  args: {
+    externalHotkeys: true,
   },
 };
 
