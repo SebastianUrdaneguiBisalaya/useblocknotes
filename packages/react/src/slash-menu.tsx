@@ -2,7 +2,7 @@ import { type Editor, Extension, type Range } from "@tiptap/core";
 import { NodeSelection, PluginKey, TextSelection } from "@tiptap/pm/state";
 import { ReactRenderer } from "@tiptap/react";
 import Suggestion from "@tiptap/suggestion";
-import type { BlockProps, BlockRegistry } from "@useblocknotes/core";
+import type { BlockProps, BlockRegistry, Messages } from "@useblocknotes/core";
 import { type ReactNode, useId } from "react";
 import { TITLE_NODE } from "./convert.js";
 
@@ -18,12 +18,7 @@ export interface SlashItem {
 }
 
 /** Texts of the slash menu. */
-export interface SlashMenuMessages {
-  /** Shown when no entry matches the query. */
-  readonly empty: string;
-  /** Accessible name of the menu. */
-  readonly label: string;
-}
+type SlashMenuMessages = Messages["slashMenu"];
 
 /**
  * Turns the current block into `type` when it is empty, or inserts a new
@@ -88,9 +83,13 @@ function insertBlock(
     .run();
 }
 
-/** Slash menu entries of the registered blocks, in registry order. */
+/**
+ * Slash menu entries of the registered blocks, in registry order. Entries
+ * with a `messageKey` take their label from `messages.blocks`.
+ */
 export function blockSlashItems(
   registry: BlockRegistry<ReactNode>,
+  messages: Messages,
 ): SlashItem[] {
   return [
     ...registry.blocks.values(),
@@ -103,7 +102,10 @@ export function blockSlashItems(
           }),
       key: `${definition.type}:${index}`,
       keywords: entry.keywords ?? [],
-      label: entry.label,
+      label:
+        entry.messageKey === undefined
+          ? entry.label
+          : messages.blocks[entry.messageKey],
       run: (editor: Editor, range: Range) =>
         insertBlock(editor, range, definition.type, entry.defaultProps),
     })),
@@ -215,8 +217,10 @@ function SlashMenuList({
 
 /** Options of the slash menu extension. */
 export interface SlashMenuOptions {
-  readonly items: readonly SlashItem[];
-  readonly messages: SlashMenuMessages;
+  /** Current entries; read each time the menu filters. */
+  items(): readonly SlashItem[];
+  /** Current texts; read each time the menu renders. */
+  messages(): SlashMenuMessages;
 }
 
 /**
@@ -247,7 +251,7 @@ export function createSlashMenu(options: SlashMenuOptions): Extension {
           floatingUi: {
             strategy: "fixed",
           },
-          items: ({ query }) => filterSlashItems(options.items, query),
+          items: ({ query }) => filterSlashItems(options.items(), query),
           pluginKey: new PluginKey("blockNotesSlashMenu"),
           render: () => {
             let renderer: ReactRenderer<ReactNode, SlashMenuListProps> | null =
@@ -260,7 +264,7 @@ export function createSlashMenu(options: SlashMenuOptions): Extension {
 
             const props = (): SlashMenuListProps => ({
               items,
-              messages: options.messages,
+              messages: options.messages(),
               onHover: (index) => {
                 selected = index;
                 renderer?.updateProps(props());

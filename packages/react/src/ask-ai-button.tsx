@@ -9,6 +9,7 @@ import type { Editor } from "@tiptap/core";
 import { useEditorState } from "@tiptap/react";
 import { type ReactNode, useLayoutEffect, useRef } from "react";
 import { TITLE_NODE } from "./convert.js";
+import { useMessages } from "./messages.js";
 import type { AiController } from "./use-ai.js";
 
 /** Props of the "Ask AI" button. */
@@ -52,6 +53,7 @@ export function AskAiButton({
   className,
   tiptap,
 }: AskAiButtonProps): ReactNode {
+  const messages = useMessages().ai;
   const range = useSelectionRange(tiptap);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const visible = range !== null && !ai.open;
@@ -120,7 +122,7 @@ export function AskAiButton({
       }}
       type="button"
     >
-      {ai.messages.askAi}
+      {messages.askAi}
     </button>
   );
 }

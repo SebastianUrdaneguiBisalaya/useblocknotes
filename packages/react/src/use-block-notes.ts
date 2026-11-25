@@ -5,17 +5,20 @@ import {
   type BlockRegistry,
   createRegistry,
   diffDocuments,
+  type Locale,
+  type Messages,
+  type MessagesOverride,
   type Operation,
   type OperationError,
   type Result,
+  resolveMessages,
   type ValidationIssue,
   validateDocument,
 } from "@useblocknotes/core";
 import { type ReactNode, useEffect, useMemo, useRef, useState } from "react";
 import { defaultBlocks } from "./blocks.js";
 import { documentToJSON, nodeToDocument } from "./convert.js";
-import { createExtensions, type Placeholders } from "./extensions.js";
-import type { SlashMenuMessages } from "./slash-menu.js";
+import { createExtensions } from "./extensions.js";
 import { applyOperationsToTransaction } from "./transaction.js";
 import type { ReactBlockDefinition, ReactInlineDefinition } from "./types.js";
 import { type AiController, type AiOptions, useAi } from "./use-ai.js";
@@ -32,7 +35,10 @@ export class InvalidDocumentError extends Error {
   }
 }
 
-/** Options of `useBlockNotes()`. Read once, on mount, except `editable`. */
+/**
+ * Options of `useBlockNotes()`. Read once, on mount, except `editable`,
+ * `locale`, `messages` and callbacks.
+ */
 export interface UseBlockNotesOptions extends AiOptions {
   /** Block types. Defaults to `defaultBlocks` (paragraph and headings). */
   readonly blocks?: readonly ReactBlockDefinition[];
@@ -42,10 +48,18 @@ export interface UseBlockNotesOptions extends AiOptions {
   readonly initialDocument?: BlockNotesDocument;
   /** `false` for read-only mode. Can change at any time. Defaults to `true`. */
   readonly editable?: boolean;
-  /** Placeholder texts. */
-  readonly placeholders?: Partial<Placeholders>;
-  /** Slash menu texts. */
-  readonly slashMenu?: Partial<SlashMenuMessages>;
+  /** Language of the built-in UI texts. Can change at any time. Defaults to `"en"`. */
+  readonly locale?: Locale;
+  /**
+   * Overrides any UI text of `locale`, by group and key. Can change at any
+   * time.
+   *
+   * @example
+   * ```ts
+   * { locale: "es", messages: { ai: { askAi: "Pregúntale a la IA" } } }
+   * ```
+   */
+  readonly messages?: MessagesOverride;
   /**
    * Called with the operations of every batch of edits (manual, pasted,
    * dragged or applied with `applyOperations()`) and the resulting document,
@@ -81,6 +95,8 @@ export interface BlockNotesInstance {
   readonly registry: BlockRegistry<ReactNode>;
   /** AI state and actions. */
   readonly ai: AiController;
+  /** UI texts resolved from `locale` and `messages`. */
+  readonly messages: Messages;
   /**
    * Returns the current document. While an AI batch is pending, returns the
    * document without it.
@@ -104,17 +120,28 @@ const EMPTY_DOCUMENT: BlockNotesDocument = {
 
 const DEFAULT_DEBOUNCE_MS = 500;
 
-const DEFAULT_ASK_AI = "Ask AI";
-
-const DEFAULT_SLASH_MENU: SlashMenuMessages = {
-  empty: "No results",
-  label: "Insert block",
-};
-
-const DEFAULT_PLACEHOLDERS: Placeholders = {
-  block: "Write something, or press '/' for commands",
-  title: "Untitled",
-};
+/**
+ * Messages of `locale` with `overrides`, keeping the same object while their
+ * content does not change (so inline `messages` objects are fine).
+ */
+function useResolvedMessages(
+  locale: Locale | undefined,
+  overrides: MessagesOverride | undefined,
+): Messages {
+  const next = resolveMessages(locale, overrides);
+  const key = JSON.stringify(next);
+  const [resolved, setResolved] = useState({
+    key,
+    messages: next,
+  });
+  if (resolved.key !== key) {
+    setResolved({
+      key,
+      messages: next,
+    });
+  }
+  return resolved.key === key ? resolved.messages : next;
+}
 
 /**
  * Creates a useblocknotes editor. Render it with `<BlockNotesEditor />`.
@@ -132,6 +159,9 @@ export function useBlockNotes(
   options: UseBlockNotesOptions = {},
 ): BlockNotesInstance {
   const { editable = true } = options;
+  const messages = useResolvedMessages(options.locale, options.messages);
+  // Read by extensions, which are created once.
+  const messagesRef = useRef(messages);
   // Set by `useAi()`; read by the slash entry and the `Mod-J` shortcut.
   const askAiRef = useRef<() => void>(() => {});
   // Document without the pending AI batch, while there is one.
@@ -156,16 +186,8 @@ export function useBlockNotes(
             ? null
             : {
                 ask: () => askAiRef.current(),
-                label: options.aiMessages?.askAi ?? DEFAULT_ASK_AI,
               },
-        placeholders: {
-          ...DEFAULT_PLACEHOLDERS,
-          ...options.placeholders,
-        },
-        slashMenu: {
-          ...DEFAULT_SLASH_MENU,
-          ...options.slashMenu,
-        },
+        messages: () => messagesRef.current,
       }),
       registry,
     };
@@ -236,6 +258,28 @@ export function useBlockNotes(
     tiptap,
   ]);
 
+  // Redraw placeholders when the texts change. Tiptap's placeholder plugin
+  // only rebuilds nodes touched by a change, so touch every empty node.
+  useEffect(() => {
+    if (messagesRef.current === messages) {
+      return;
+    }
+    messagesRef.current = messages;
+    if (tiptap === null || tiptap.isDestroyed) {
+      return;
+    }
+    const tr = tiptap.state.tr;
+    tr.doc.forEach((node, pos) => {
+      if (node.content.size === 0) {
+        tr.setNodeMarkup(pos, undefined, node.attrs);
+      }
+    });
+    tiptap.view.dispatch(tr.setMeta("addToHistory", false));
+  }, [
+    tiptap,
+    messages,
+  ]);
+
   const ai = useAi(tiptap, setup.registry, options, aiBaseRef);
   useEffect(() => {
     askAiRef.current = ai.ask;
@@ -289,11 +333,13 @@ export function useBlockNotes(
           ? setup.document
           : (aiBaseRef.current ?? nodeToDocument(tiptap.state.doc));
       },
+      messages,
       registry: setup.registry,
       tiptap,
     }),
     [
       ai,
+      messages,
       tiptap,
       setup,
     ],

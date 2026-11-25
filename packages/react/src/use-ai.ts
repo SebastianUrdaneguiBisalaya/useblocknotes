@@ -58,34 +58,6 @@ export interface AiHistoryEntry {
   readonly result: "accepted" | "rejected" | null;
 }
 
-/** Texts of the AI prompt, chat bar and "Ask AI" button. */
-export interface AiMessages {
-  /** "Ask AI" button and slash menu entry. */
-  readonly askAi: string;
-  /** Accessible name of the AI prompt. */
-  readonly label: string;
-  /** Placeholder of the instruction input. */
-  readonly placeholder: string;
-  readonly submit: string;
-  readonly cancel: string;
-  readonly accept: string;
-  readonly reject: string;
-  readonly close: string;
-  readonly loading: string;
-  readonly streaming: string;
-  readonly done: string;
-  readonly cancelled: string;
-  readonly error: string;
-  /** Shown on a request whose batch was accepted. */
-  readonly accepted: string;
-  /** Shown on a request whose batch was discarded. */
-  readonly rejected: string;
-  /** Accessible name of the chat history. */
-  readonly history: string;
-  /** Label before the selected text a request applies to. */
-  readonly selection: string;
-}
-
 /** AI options of `useBlockNotes()`. */
 export interface AiOptions {
   /**
@@ -102,8 +74,6 @@ export interface AiOptions {
     document: BlockNotesDocument,
     selection: AiSelection | null,
   ) => string;
-  /** AI texts. */
-  readonly aiMessages?: Partial<AiMessages>;
   /** Called when a request is sent to the adapter. */
   readonly onAiStart?: (request: AiRequest) => void;
   /** Called when the stream ends successfully, before accept or reject. */
@@ -127,8 +97,6 @@ export interface AiController {
   readonly hasChanges: boolean;
   /** Requests made in this editor, oldest first. */
   readonly history: readonly AiHistoryEntry[];
-  /** Resolved AI texts. */
-  readonly messages: AiMessages;
   /** Opens the prompt for the current editor selection. */
   ask(): void;
   /**
@@ -146,26 +114,6 @@ export interface AiController {
   /** Empties `history`. */
   clearHistory(): void;
 }
-
-const DEFAULT_MESSAGES: AiMessages = {
-  accept: "Accept",
-  accepted: "Accepted",
-  askAi: "Ask AI",
-  cancel: "Stop",
-  cancelled: "Stopped",
-  close: "Close",
-  done: "Review the changes",
-  error: "Something went wrong",
-  history: "AI conversation",
-  label: "AI assistant",
-  loading: "Thinking…",
-  placeholder: "Ask AI to write or edit…",
-  reject: "Discard",
-  rejected: "Discarded",
-  selection: "Selection",
-  streaming: "Writing…",
-  submit: "Generate",
-};
 
 interface Session {
   readonly base: BlockNotesDocument;
@@ -231,16 +179,6 @@ export function useAi(
   });
 
   const enabled = options.ai !== undefined;
-  const custom = options.aiMessages;
-  const messages = useMemo(
-    () => ({
-      ...DEFAULT_MESSAGES,
-      ...custom,
-    }),
-    [
-      custom,
-    ],
-  );
 
   // Abort the stream on unmount.
   useEffect(
@@ -472,7 +410,6 @@ export function useAi(
       error: view.error,
       hasChanges: view.hasChanges,
       history,
-      messages,
       open: view.open,
       reject: actions.reject,
       selection: view.selection,
@@ -483,7 +420,6 @@ export function useAi(
       actions,
       enabled,
       history,
-      messages,
       view,
     ],
   );

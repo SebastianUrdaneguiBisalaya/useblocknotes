@@ -44,6 +44,18 @@ export type {
   TextNode,
 } from "./document.js";
 export { MARK_TYPES, sortMarks } from "./document.js";
+export type {
+  BlockMessageKey,
+  Locale,
+  Messages,
+  MessagesOverride,
+} from "./i18n.js";
+export {
+  builtInMessages,
+  enMessages,
+  esMessages,
+  resolveMessages,
+} from "./i18n.js";
 export { createBlockId } from "./id.js";
 export type {
   ApplyOperationsOptions,

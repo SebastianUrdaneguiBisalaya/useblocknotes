@@ -15,6 +15,7 @@ export const paragraphBlock = defineBlock<"paragraph", BlockProps>({
         "p",
       ],
       label: "Text",
+      messageKey: "paragraph",
     },
   ],
   toMarkdown: (block, context) => context.markdown(block.content),
@@ -48,6 +49,7 @@ export const headingBlock = defineBlock({
       `h${level}`,
     ],
     label: `Heading ${level}`,
+    messageKey: `heading${level}` as const,
   })),
   toMarkdown: (block, context) =>
     `${"#".repeat(block.props.level)} ${context.markdown(block.content)}`,
@@ -81,6 +83,7 @@ export const bulletListItemBlock = defineBlock({
         "ul",
       ],
       label: "Bulleted list",
+      messageKey: "bulletListItem",
     },
   ],
   toMarkdown: (block, context) =>
@@ -108,6 +111,7 @@ export const numberedListItemBlock = defineBlock({
         "ol",
       ],
       label: "Numbered list",
+      messageKey: "numberedListItem",
     },
   ],
   // Markdown renumbers `1.` items, so every item can use `1.`.
@@ -130,6 +134,7 @@ export const quoteBlock = defineBlock<"quote", BlockProps>({
         "citation",
       ],
       label: "Quote",
+      messageKey: "quote",
     },
   ],
   toMarkdown: (block, context) =>
@@ -159,6 +164,7 @@ export const codeBlock = defineBlock({
         "pre",
       ],
       label: "Code",
+      messageKey: "codeBlock",
     },
   ],
   toMarkdown: (block, context) => {

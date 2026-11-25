@@ -6,6 +6,7 @@ import {
   createRegistry,
   defineBlock,
   defineInline,
+  enMessages,
 } from "@useblocknotes/core";
 import type { ReactNode } from "react";
 import * as z from "zod";
@@ -46,14 +47,7 @@ const registry = createRegistry<ReactNode>({
 
 const schema = getSchema(
   createExtensions(registry, {
-    placeholders: {
-      block: "",
-      title: "",
-    },
-    slashMenu: {
-      empty: "",
-      label: "",
-    },
+    messages: () => enMessages,
   }),
 );
 

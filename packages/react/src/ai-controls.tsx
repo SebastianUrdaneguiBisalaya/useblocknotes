@@ -1,4 +1,5 @@
 import { type ReactNode, useEffect, useRef, useState } from "react";
+import { useMessages } from "./messages.js";
 import type { AiController } from "./use-ai.js";
 
 /** `true` while a request is waiting for or receiving events. */
@@ -42,7 +43,7 @@ export function AiComposer({
   closable,
   focus,
 }: AiComposerProps): ReactNode {
-  const { messages } = ai;
+  const messages = useMessages().ai;
   const [instruction, setInstruction] = useState("");
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const disabled = ai.status !== "idle";
@@ -117,7 +118,8 @@ export function AiComposer({
  * error) with Stop while it runs, then Accept and Discard.
  */
 export function AiStatusLine({ ai }: { readonly ai: AiController }): ReactNode {
-  const { messages, status } = ai;
+  const messages = useMessages().ai;
+  const { status } = ai;
   const running = isRunning(ai);
   const reviewing = !running && status !== "idle";
   const acceptRef = useRef<HTMLButtonElement>(null);

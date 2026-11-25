@@ -5,6 +5,7 @@ import type {
   InlineElementNode,
   InlineNode,
 } from "./document.js";
+import type { BlockMessageKey } from "./i18n.js";
 
 /**
  * What a block holds besides its props:
@@ -26,6 +27,11 @@ export interface TextContext {
 export interface SlashMenuEntry<TProps extends BlockProps, TNode = null> {
   /** Text shown in the menu. */
   readonly label: string;
+  /**
+   * Key in `messages.blocks` that localizes `label`. Used by the built-in
+   * blocks; custom blocks pass an already localized `label`.
+   */
+  readonly messageKey?: BlockMessageKey;
   /** Icon shown next to the label (for example a React element). */
   readonly icon?: TNode;
   /** Extra words that match this entry when filtering. */

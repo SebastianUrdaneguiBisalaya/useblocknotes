@@ -1,3 +1,4 @@
+import type { Messages } from "@useblocknotes/core";
 import { type ReactNode, useEffect, useRef } from "react";
 import {
   AiComposer,
@@ -5,7 +6,10 @@ import {
   escapeHandler,
   join,
 } from "./ai-controls.js";
-import type { AiController, AiHistoryEntry, AiMessages } from "./use-ai.js";
+import { useMessages } from "./messages.js";
+import type { AiController, AiHistoryEntry } from "./use-ai.js";
+
+type AiMessages = Messages["ai"];
 
 /** Props of the AI chat bar. */
 export interface AiChatBarProps {
@@ -50,7 +54,8 @@ function HistoryEntry({
  * with the history of requests above the input.
  */
 export function AiChatBar({ ai, className }: AiChatBarProps): ReactNode {
-  const { history, messages } = ai;
+  const { history } = ai;
+  const messages = useMessages().ai;
   const historyRef = useRef<HTMLOListElement>(null);
   const last = history.at(-1);
 

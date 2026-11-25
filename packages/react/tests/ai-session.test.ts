@@ -6,6 +6,7 @@ import {
   type AiStreamEvent,
   type BlockNotesDocument,
   createRegistry,
+  enMessages,
   processAiStream,
 } from "@useblocknotes/core";
 import type { ReactNode } from "react";
@@ -25,14 +26,7 @@ const registry = createRegistry<ReactNode>({
 
 const schema = getSchema(
   createExtensions(registry, {
-    placeholders: {
-      block: "",
-      title: "",
-    },
-    slashMenu: {
-      empty: "",
-      label: "",
-    },
+    messages: () => enMessages,
   }),
 );
 
