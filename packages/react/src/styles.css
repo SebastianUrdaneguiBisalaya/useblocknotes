@@ -252,13 +252,13 @@
   box-shadow: inset 2px 0 0 var(--bn-accent-color);
 }
 
-.bn-ai-prompt {
+.bn-ai-popover,
+.bn-ai-chat {
   display: flex;
-  flex-wrap: wrap;
+  flex-direction: column;
   gap: 0.5rem;
-  align-items: center;
   padding: 0.5rem;
-  margin-top: 0.5rem;
+  color: var(--bn-menu-color, inherit);
   background: var(--bn-menu-background, Canvas);
   border: 1px solid
     var(
@@ -266,17 +266,95 @@
       color-mix(in srgb, currentColor 15%, transparent)
     );
   border-radius: var(--bn-menu-radius, 0.5rem);
+  box-shadow: var(--bn-menu-shadow, 0 8px 24px rgb(0 0 0 / 12%));
+}
+
+.bn-ai-popover {
+  z-index: var(--bn-menu-z-index, 50);
+  width: var(--bn-ai-popover-width, min(32rem, calc(100vw - 1rem)));
+}
+
+.bn-ai-chat {
+  position: sticky;
+  inset-block-end: var(--bn-ai-chat-offset, 1rem);
+  z-index: var(--bn-ai-chat-z-index, 10);
+  max-width: var(--bn-ai-chat-max-width, 48rem);
+  margin: 1rem auto 0;
+  border-radius: var(--bn-ai-chat-radius, 1rem);
+}
+
+.bn-ai-history {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  max-height: var(--bn-ai-history-max-height, 16rem);
+  padding: 0;
+  margin: 0;
+  overflow-y: auto;
+  list-style: none;
+}
+
+.bn-ai-message {
+  align-self: flex-end;
+  max-width: 85%;
+  padding: 0.5rem 0.75rem;
+  background: var(
+    --bn-ai-message-background,
+    color-mix(in srgb, currentColor 6%, transparent)
+  );
+  border-radius: var(--bn-ai-message-radius, 0.75rem);
+}
+
+.bn-ai-message p {
+  margin: 0;
+}
+
+.bn-ai-message-selection,
+.bn-ai-selection {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 0.75rem;
+  color: var(--bn-muted-color);
+  white-space: nowrap;
+}
+
+.bn-ai-selection {
+  margin: 0;
+}
+
+.bn-ai-message-text {
+  white-space: pre-wrap;
+}
+
+.bn-ai-message-status {
+  font-size: 0.75rem;
+  color: var(--bn-muted-color);
+}
+
+.bn-ai-message[data-bn-ai-status="error"] .bn-ai-message-status {
+  color: var(--bn-ai-error-color, #dc2626);
+}
+
+.bn-ai-state {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+  justify-content: space-between;
 }
 
 .bn-ai-form {
   display: flex;
-  flex: 1;
   gap: 0.5rem;
+  align-items: flex-end;
 }
 
 .bn-ai-input {
   flex: 1;
   min-width: 0;
+  resize: none;
+  field-sizing: content;
+  max-height: 10rem;
   padding: 0.375rem 0.5rem;
   font: inherit;
   color: inherit;
@@ -294,7 +372,7 @@
   display: none;
 }
 
-.bn-ai-prompt[data-bn-ai-status="error"] .bn-ai-status {
+.bn-ai-state[data-bn-ai-status="error"] .bn-ai-status {
   color: var(--bn-ai-error-color, #dc2626);
 }
 
