@@ -1,0 +1,79 @@
+/* Styles of the playground only. The library ships no imposed styles. */
+.sb-playground {
+  max-width: 48rem;
+  padding-bottom: 6rem;
+  margin: 0 auto;
+}
+
+.sb-playground .bn-root {
+  --bn-font-family: system-ui, sans-serif;
+}
+
+.bn-root h1.sb-title {
+  margin: 0.5rem 0 0;
+  font-size: 2rem;
+  font-weight: 700;
+}
+
+.bn-root .sb-subtitle {
+  margin: 0;
+  font-size: 1.125rem;
+  color: var(--bn-muted-color);
+}
+
+.sb-table table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.sb-table th,
+.sb-table td {
+  padding: 0.25rem 0.5rem;
+  text-align: left;
+  border: 1px solid #d4d4d8;
+}
+
+.sb-table th {
+  background: #f4f4f5;
+}
+
+.sb-table input {
+  width: 100%;
+  font: inherit;
+  background: transparent;
+  border: 0;
+}
+
+.sb-chart {
+  padding: 0.5rem 0;
+}
+
+.sb-block-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+  margin-top: 0.5rem;
+}
+
+.sb-chart-point {
+  display: inline-flex;
+  gap: 0.25rem;
+}
+
+.sb-chart-point input {
+  width: 5rem;
+}
+
+.sb-pdf {
+  padding-top: 1rem;
+  margin-top: 2rem;
+  border-top: 1px solid #e4e4e7;
+}
+
+.sb-pdf iframe {
+  width: 100%;
+  height: 40rem;
+  margin-top: 1rem;
+  border: 1px solid #e4e4e7;
+}
