@@ -19,6 +19,7 @@ import {
 import { defaultBlocks } from "../src/blocks.js";
 import { documentToJSON, nodeToDocument } from "../src/convert.js";
 import { createExtensions } from "../src/extensions.js";
+import { createSlashMenuStore } from "../src/slash-menu.js";
 
 const registry = createRegistry<ReactNode>({
   blocks: defaultBlocks,
@@ -27,6 +28,7 @@ const registry = createRegistry<ReactNode>({
 const schema = getSchema(
   createExtensions(registry, {
     messages: () => enMessages,
+    slashMenu: createSlashMenuStore(),
   }),
 );
 

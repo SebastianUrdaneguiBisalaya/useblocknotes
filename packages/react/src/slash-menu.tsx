@@ -1,24 +1,38 @@
 import { type Editor, Extension, type Range } from "@tiptap/core";
 import { NodeSelection, PluginKey, TextSelection } from "@tiptap/pm/state";
-import { ReactRenderer } from "@tiptap/react";
-import Suggestion from "@tiptap/suggestion";
+import Suggestion, { exitSuggestion } from "@tiptap/suggestion";
 import type { BlockProps, BlockRegistry, Messages } from "@useblocknotes/core";
-import { type ReactNode, useId } from "react";
+import {
+  type ComponentType,
+  type ReactNode,
+  useEffect,
+  useId,
+  useSyncExternalStore,
+} from "react";
 import { TITLE_NODE } from "./convert.js";
+import {
+  type FloatingProps,
+  type FloatingReference,
+  useFloating,
+} from "./floating.js";
+import { useMessages } from "./messages.js";
 
-/** An entry of the slash menu. */
-export interface SlashItem {
+/** An entry of the slash menu, as shown to a slash menu component. */
+export interface SlashMenuItem {
   /** Stable key, unique in the menu. */
   readonly key: string;
+  /** Localized text. */
   readonly label: string;
   readonly icon?: ReactNode;
+  /** Extra words that match this entry when filtering. */
   readonly keywords: readonly string[];
+}
+
+/** @internal An entry of the slash menu with its action. */
+export interface SlashItem extends SlashMenuItem {
   /** Runs the entry. `range` is the typed `/query`, to be removed. */
   run(editor: Editor, range: Range): void;
 }
-
-/** Texts of the slash menu. */
-type SlashMenuMessages = Messages["slashMenu"];
 
 /**
  * Turns the current block into `type` when it is empty, or inserts a new
@@ -157,78 +171,78 @@ export function filterSlashItems(
   ];
 }
 
-interface SlashMenuListProps {
-  readonly items: readonly SlashItem[];
-  readonly selected: number;
-  readonly messages: SlashMenuMessages;
-  readonly onSelect: (index: number) => void;
-  readonly onHover: (index: number) => void;
+/** State and actions of the open slash menu. */
+export interface SlashMenuState {
+  /** Entries matching `query`, best matches first. */
+  readonly items: readonly SlashMenuItem[];
+  /** Text typed after `/`. */
+  readonly query: string;
+  /**
+   * Highlighted entry. Arrow keys move it, and Enter or Tab run it; the
+   * editor handles those keys.
+   */
+  readonly selectedIndex: number;
+  /** Position of the typed `/query`. */
+  readonly reference: FloatingReference;
+  /** Runs the entry at `index` and closes the menu. */
+  select(index: number): void;
+  /** Highlights the entry at `index`, for example on hover. */
+  highlight(index: number): void;
+  /** Closes the menu and leaves the typed text. */
+  close(): void;
 }
 
-function SlashMenuList({
-  items,
-  messages,
-  onHover,
-  onSelect,
-  selected,
-}: SlashMenuListProps): ReactNode {
-  const id = useId();
-  if (items.length === 0) {
-    return <div className="bn-slash-empty">{messages.empty}</div>;
-  }
-  return (
-    <div
-      aria-activedescendant={`${id}-${selected}`}
-      aria-label={messages.label}
-      className="bn-slash-list"
-      role="listbox"
-      tabIndex={-1}
-    >
-      {items.map((item, index) => (
-        <div
-          aria-selected={index === selected}
-          className="bn-slash-item"
-          data-selected={index === selected ? "" : undefined}
-          id={`${id}-${index}`}
-          key={item.key}
-          // Keep the editor focused: select on mouse down.
-          onMouseDown={(event) => {
-            event.preventDefault();
-            onSelect(index);
-          }}
-          onMouseEnter={() => onHover(index)}
-          role="option"
-          tabIndex={-1}
-        >
-          {item.icon === undefined ? null : (
-            <span
-              aria-hidden="true"
-              className="bn-slash-icon"
-            >
-              {item.icon}
-            </span>
-          )}
-          <span className="bn-slash-label">{item.label}</span>
-        </div>
-      ))}
-    </div>
-  );
+/** Live slash menu state of an editor. `null` while the menu is closed. */
+export interface SlashMenuStore {
+  getState(): SlashMenuState | null;
+  /** Calls `listener` on every change. Returns the unsubscribe function. */
+  subscribe(listener: () => void): () => void;
+}
+
+/** @internal A store the slash menu extension writes to. */
+export interface WritableSlashMenuStore extends SlashMenuStore {
+  setState(state: SlashMenuState | null): void;
+}
+
+/** @internal */
+export function createSlashMenuStore(): WritableSlashMenuStore {
+  let state: SlashMenuState | null = null;
+  const listeners = new Set<() => void>();
+  return {
+    getState: () => state,
+    setState: (next) => {
+      state = next;
+      for (const listener of listeners) {
+        listener();
+      }
+    },
+    subscribe: (listener) => {
+      listeners.add(listener);
+      return () => {
+        listeners.delete(listener);
+      };
+    },
+  };
 }
 
 /** Options of the slash menu extension. */
 export interface SlashMenuOptions {
   /** Current entries; read each time the menu filters. */
   items(): readonly SlashItem[];
-  /** Current texts; read each time the menu renders. */
-  messages(): SlashMenuMessages;
+  /** Receives the menu state for `<BlockNotesEditor />` to render. */
+  readonly store: WritableSlashMenuStore;
 }
+
+const slashMenuKey = new PluginKey("blockNotesSlashMenu");
 
 /**
  * @internal The `/` menu. Opens after `/` at the start of a block or after a
  * space, filters entries as the user types, and runs the selected entry.
- * Not available in the title or in code blocks.
+ * Not available in the title or in code blocks. Its state goes to `store`;
+ * `<BlockNotesEditor />` renders it.
  */
 export function createSlashMenu(options: SlashMenuOptions): Extension {
+  const { store } = options;
   return Extension.create({
     addProseMirrorPlugins() {
       const editor = this.editor;
@@ -246,46 +260,50 @@ export function createSlashMenu(options: SlashMenuOptions): Extension {
           char: "/",
           command: ({ editor: target, props, range }) =>
             props.run(target, range),
-          dismissOnOutsideClick: true,
           editor,
-          floatingUi: {
-            strategy: "fixed",
-          },
           items: ({ query }) => filterSlashItems(options.items(), query),
-          pluginKey: new PluginKey("blockNotesSlashMenu"),
+          pluginKey: slashMenuKey,
           render: () => {
-            let renderer: ReactRenderer<ReactNode, SlashMenuListProps> | null =
-              null;
-            let unmount: (() => void) | null = null;
-            let element: HTMLElement | null = null;
             let items: readonly SlashItem[] = [];
+            let query = "";
             let selected = 0;
             let command: ((item: SlashItem) => void) | null = null;
+            let clientRect: (() => DOMRect | null) | null = null;
+            // One reference per opening, reading the latest position.
+            let reference: FloatingReference | null = null;
 
-            const props = (): SlashMenuListProps => ({
-              items,
-              messages: options.messages(),
-              onHover: (index) => {
+            const select = (index: number): void => {
+              const item = items[index];
+              if (item !== undefined) {
+                command?.(item);
+              }
+            };
+            const close = (): void => exitSuggestion(editor.view, slashMenuKey);
+            const highlight = (index: number): void => {
+              if (index >= 0 && index < items.length && index !== selected) {
                 selected = index;
-                renderer?.updateProps(props());
-              },
-              onSelect: (index) => {
-                const item = items[index];
-                if (item !== undefined) {
-                  command?.(item);
-                }
-              },
-              selected,
-            });
+                publish();
+              }
+            };
+            const publish = (): void => {
+              if (reference === null) {
+                return;
+              }
+              store.setState({
+                close,
+                highlight,
+                items,
+                query,
+                reference,
+                select,
+                selectedIndex: selected,
+              });
+            };
 
             return {
               onExit: () => {
-                unmount?.();
-                renderer?.destroy();
-                element?.remove();
-                renderer = null;
-                unmount = null;
-                element = null;
+                reference = null;
+                store.setState(null);
               },
               onKeyDown: ({ event }) => {
                 if (items.length === 0) {
@@ -294,37 +312,34 @@ export function createSlashMenu(options: SlashMenuOptions): Extension {
                 if (event.key === "ArrowDown" || event.key === "ArrowUp") {
                   const step = event.key === "ArrowDown" ? 1 : -1;
                   selected = (selected + step + items.length) % items.length;
-                  renderer?.updateProps(props());
+                  publish();
                   return true;
                 }
                 if (event.key === "Enter" || event.key === "Tab") {
-                  props().onSelect(selected);
+                  select(selected);
                   return true;
                 }
                 return false;
               },
               onStart: (suggestion) => {
                 items = suggestion.items;
+                query = suggestion.query;
                 selected = 0;
                 command = suggestion.command;
-                renderer = new ReactRenderer(SlashMenuList, {
-                  editor: suggestion.editor,
-                  props: props(),
-                });
-                element = renderer.element;
-                element.classList.add("bn-slash-menu");
-                // Mount inside the editor root so `--bn-*` variables apply.
-                const root =
-                  suggestion.editor.view.dom.closest("[data-bn-root]") ??
-                  document.body;
-                root.appendChild(element);
-                unmount = suggestion.mount?.(element) ?? null;
+                clientRect = suggestion.clientRect ?? null;
+                reference = {
+                  contextElement: suggestion.editor.view.dom,
+                  getBoundingClientRect: () => clientRect?.() ?? new DOMRect(),
+                };
+                publish();
               },
               onUpdate: (suggestion) => {
                 items = suggestion.items;
+                query = suggestion.query;
                 selected = Math.min(selected, Math.max(0, items.length - 1));
                 command = suggestion.command;
-                renderer?.updateProps(props());
+                clientRect = suggestion.clientRect ?? null;
+                publish();
               },
             };
           },
@@ -334,4 +349,145 @@ export function createSlashMenu(options: SlashMenuOptions): Extension {
     },
     name: "blockNotesSlashMenu",
   });
+}
+
+/** Props of a slash menu component (see `components.slashMenu`). */
+export interface SlashMenuProps extends SlashMenuState {
+  /** Spread on the root element to let the editor position it. */
+  readonly floating: FloatingProps;
+}
+
+/**
+ * The built-in slash menu: a listbox of entries with icons. Uses the
+ * `bn-slash-*` classes.
+ */
+export function SlashMenu({
+  floating,
+  highlight,
+  items,
+  select,
+  selectedIndex,
+}: SlashMenuProps): ReactNode {
+  const messages = useMessages().slashMenu;
+  const id = useId();
+  return (
+    <div
+      {...floating}
+      className="bn-slash-menu"
+    >
+      {items.length === 0 ? (
+        <div className="bn-slash-empty">{messages.empty}</div>
+      ) : (
+        <div
+          aria-activedescendant={`${id}-${selectedIndex}`}
+          aria-label={messages.label}
+          className="bn-slash-list"
+          role="listbox"
+          tabIndex={-1}
+        >
+          {items.map((item, index) => (
+            <div
+              aria-selected={index === selectedIndex}
+              className="bn-slash-item"
+              data-selected={index === selectedIndex ? "" : undefined}
+              id={`${id}-${index}`}
+              key={item.key}
+              // Keep the editor focused: select on mouse down.
+              onMouseDown={(event) => {
+                event.preventDefault();
+                select(index);
+              }}
+              onMouseEnter={() => highlight(index)}
+              role="option"
+              tabIndex={-1}
+            >
+              {item.icon === undefined ? null : (
+                <span
+                  aria-hidden="true"
+                  className="bn-slash-icon"
+                >
+                  {item.icon}
+                </span>
+              )}
+              <span className="bn-slash-label">{item.label}</span>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/**
+ * Reads the live slash menu state of an editor, or `null` while it is closed.
+ * Use it to render a slash menu outside `<BlockNotesEditor />` (pass
+ * `components={{ slashMenu: null }}` to hide the built-in one).
+ *
+ * @example
+ * ```tsx
+ * const menu = useSlashMenu(editor);
+ * return menu === null ? null : <MyMenu {...menu} />;
+ * ```
+ */
+export function useSlashMenu(editor: {
+  readonly slashMenu: SlashMenuStore;
+}): SlashMenuState | null {
+  const store = editor.slashMenu;
+  return useSyncExternalStore(store.subscribe, store.getState, () => null);
+}
+
+/**
+ * @internal Renders the slash menu component while the menu is open, and
+ * closes the menu on a pointer down outside the editor and outside any
+ * element with `data-bn-slash-menu` (the host, or a portal of a custom menu).
+ */
+export function SlashMenuHost({
+  component: Component,
+  editorElement,
+  store,
+}: {
+  readonly component: ComponentType<SlashMenuProps>;
+  readonly editorElement: Element | null;
+  readonly store: SlashMenuStore;
+}): ReactNode {
+  const state = useSlashMenu({
+    slashMenu: store,
+  });
+  const floating = useFloating(state?.reference ?? null, "bottom-start");
+  const close = state?.close;
+  useEffect(() => {
+    if (close === undefined) {
+      return;
+    }
+    const onPointerDown = (event: PointerEvent): void => {
+      const target = event.target;
+      if (
+        target instanceof Node &&
+        !editorElement?.contains(target) &&
+        !(target instanceof Element && target.closest("[data-bn-slash-menu]"))
+      ) {
+        close();
+      }
+    };
+    document.addEventListener("pointerdown", onPointerDown, true);
+    return () =>
+      document.removeEventListener("pointerdown", onPointerDown, true);
+  }, [
+    close,
+    editorElement,
+  ]);
+  if (state === null) {
+    return null;
+  }
+  return (
+    <div
+      className="bn-slash-host"
+      data-bn-slash-menu=""
+    >
+      <Component
+        {...state}
+        floating={floating}
+      />
+    </div>
+  );
 }

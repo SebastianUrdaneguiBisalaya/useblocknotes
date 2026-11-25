@@ -19,6 +19,7 @@ import { type ReactNode, useEffect, useMemo, useRef, useState } from "react";
 import { defaultBlocks } from "./blocks.js";
 import { documentToJSON, nodeToDocument } from "./convert.js";
 import { createExtensions } from "./extensions.js";
+import { createSlashMenuStore, type SlashMenuStore } from "./slash-menu.js";
 import { applyOperationsToTransaction } from "./transaction.js";
 import type { ReactBlockDefinition, ReactInlineDefinition } from "./types.js";
 import { type AiController, type AiOptions, useAi } from "./use-ai.js";
@@ -97,6 +98,11 @@ export interface BlockNotesInstance {
   readonly ai: AiController;
   /** UI texts resolved from `locale` and `messages`. */
   readonly messages: Messages;
+  /**
+   * Live state of the slash menu. Read it with `useSlashMenu()` to render a
+   * slash menu outside `<BlockNotesEditor />`.
+   */
+  readonly slashMenu: SlashMenuStore;
   /**
    * Returns the current document. While an AI batch is pending, returns the
    * document without it.
@@ -178,6 +184,7 @@ export function useBlockNotes(
     if (!validated.ok) {
       throw new InvalidDocumentError(validated.error);
     }
+    const slashMenu = createSlashMenuStore();
     return {
       document: validated.value,
       extensions: createExtensions(registry, {
@@ -188,8 +195,10 @@ export function useBlockNotes(
                 ask: () => askAiRef.current(),
               },
         messages: () => messagesRef.current,
+        slashMenu,
       }),
       registry,
+      slashMenu,
     };
   });
 
@@ -335,6 +344,7 @@ export function useBlockNotes(
       },
       messages,
       registry: setup.registry,
+      slashMenu: setup.slashMenu,
       tiptap,
     }),
     [

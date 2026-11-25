@@ -1,10 +1,15 @@
 import { EditorContent } from "@tiptap/react";
-import type { ReactNode } from "react";
-import { AiChatBar } from "./ai-chat-bar.js";
+import type { ComponentType, ReactNode } from "react";
+import { AiChatBar, type AiChatBarProps } from "./ai-chat-bar.js";
 import { join } from "./ai-controls.js";
-import { AiPopover } from "./ai-popover.js";
-import { AskAiButton } from "./ask-ai-button.js";
+import { AiPopover, AiPopoverHost, type AiPopoverProps } from "./ai-popover.js";
+import {
+  AskAiButton,
+  type AskAiButtonProps,
+  AskAiHost,
+} from "./ask-ai-button.js";
 import { MessagesContext } from "./messages.js";
+import { SlashMenu, SlashMenuHost, type SlashMenuProps } from "./slash-menu.js";
 import type { BlockNotesInstance } from "./use-block-notes.js";
 
 /**
@@ -15,6 +20,30 @@ import type { BlockNotesInstance } from "./use-block-notes.js";
  *   requests. `/ai`, `Mod-J` and "Ask AI" focus it.
  */
 export type AiMode = "popover" | "chat";
+
+/**
+ * Components that replace the built-in UI. Each one is optional: omit it to
+ * keep the built-in component, or pass `null` to render nothing. The editor
+ * keeps the logic (filtering, keys, AI state) and passes it as props.
+ *
+ * @example
+ * ```tsx
+ * <BlockNotesEditor
+ *   editor={editor}
+ *   components={{ slashMenu: MySlashMenu, askAiButton: null }}
+ * />
+ * ```
+ */
+export interface BlockNotesComponents {
+  /** The `/` menu. */
+  readonly slashMenu?: ComponentType<SlashMenuProps> | null;
+  /** The AI prompt when `aiMode` is `"popover"`. */
+  readonly aiPopover?: ComponentType<AiPopoverProps> | null;
+  /** The AI prompt when `aiMode` is `"chat"`. */
+  readonly aiChatBar?: ComponentType<AiChatBarProps> | null;
+  /** The button shown above a selection that opens the AI prompt. */
+  readonly askAiButton?: ComponentType<AskAiButtonProps> | null;
+}
 
 /** Props of `<BlockNotesEditor />`. */
 export interface BlockNotesEditorProps {
@@ -32,6 +61,8 @@ export interface BlockNotesEditorProps {
   readonly aiChatClassName?: string;
   /** Class of the floating "Ask AI" button (`.bn-ask-ai`). */
   readonly askAiClassName?: string;
+  /** Replaces or hides the slash menu and the AI components. */
+  readonly components?: BlockNotesComponents;
 }
 
 /**
@@ -51,9 +82,15 @@ export function BlockNotesEditor({
   aiPopoverClassName,
   askAiClassName,
   className,
+  components = {},
   contentClassName,
   editor,
 }: BlockNotesEditorProps): ReactNode {
+  const { ai, tiptap } = editor;
+  const slashMenu = pick(components.slashMenu, SlashMenu);
+  const aiPopover = pick(components.aiPopover, AiPopover);
+  const ChatBar = pick(components.aiChatBar, AiChatBar);
+  const askAiButton = pick(components.askAiButton, AskAiButton);
   return (
     <MessagesContext value={editor.messages}>
       <div
@@ -62,29 +99,49 @@ export function BlockNotesEditor({
       >
         <EditorContent
           className={join("bn-content", contentClassName)}
-          editor={editor.tiptap}
+          editor={tiptap}
         />
-        {editor.ai.enabled ? (
-          <AskAiButton
-            ai={editor.ai}
+        {slashMenu === null ? null : (
+          <SlashMenuHost
+            component={slashMenu}
+            editorElement={tiptap?.view.dom ?? null}
+            store={editor.slashMenu}
+          />
+        )}
+        {ai.enabled && tiptap !== null && askAiButton !== null ? (
+          <AskAiHost
+            ai={ai}
             className={askAiClassName}
-            tiptap={editor.tiptap}
+            component={askAiButton}
+            tiptap={tiptap}
           />
         ) : null}
-        {editor.ai.enabled && aiMode === "chat" ? (
-          <AiChatBar
-            ai={editor.ai}
+        {ai.enabled && aiMode === "chat" && ChatBar !== null ? (
+          <ChatBar
+            ai={ai}
             className={aiChatClassName}
           />
         ) : null}
-        {editor.ai.open && aiMode === "popover" ? (
-          <AiPopover
-            ai={editor.ai}
+        {ai.open &&
+        aiMode === "popover" &&
+        tiptap !== null &&
+        aiPopover !== null ? (
+          <AiPopoverHost
+            ai={ai}
             className={aiPopoverClassName}
-            tiptap={editor.tiptap}
+            component={aiPopover}
+            tiptap={tiptap}
           />
         ) : null}
       </div>
     </MessagesContext>
   );
+}
+
+/** The consumer's component, the built-in one when omitted, or `null`. */
+function pick<TProps>(
+  custom: ComponentType<TProps> | null | undefined,
+  builtIn: ComponentType<TProps>,
+): ComponentType<TProps> | null {
+  return custom === undefined ? builtIn : custom;
 }

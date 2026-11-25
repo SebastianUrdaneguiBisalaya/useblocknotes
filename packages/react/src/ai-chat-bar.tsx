@@ -11,8 +11,9 @@ import type { AiController, AiHistoryEntry } from "./use-ai.js";
 
 type AiMessages = Messages["ai"];
 
-/** Props of the AI chat bar. */
+/** Props of an AI chat bar component (see `components.aiChatBar`). */
 export interface AiChatBarProps {
+  /** AI state and actions of the editor. */
   readonly ai: AiController;
   /** Class of the chat bar (`.bn-ai-chat`). */
   readonly className?: string | undefined;
@@ -50,8 +51,8 @@ function HistoryEntry({
 }
 
 /**
- * @internal The AI prompt as a chat bar fixed at the bottom of the editor,
- * with the history of requests above the input.
+ * The built-in AI chat bar: the prompt fixed at the bottom of the editor,
+ * with the history of requests above the input. Uses the `bn-ai-*` classes.
  */
 export function AiChatBar({ ai, className }: AiChatBarProps): ReactNode {
   const { history } = ai;

@@ -41,7 +41,12 @@ import { BlockViewContext } from "./context.js";
 import { BLOCK_GROUP, nodeToBlock, TITLE_NODE } from "./convert.js";
 import { BlockKeymap, ListNumbers, listNumberOf } from "./lists.js";
 import { BlockMove, DragHandle } from "./move.js";
-import { aiSlashItem, blockSlashItems, createSlashMenu } from "./slash-menu.js";
+import {
+  aiSlashItem,
+  blockSlashItems,
+  createSlashMenu,
+  type WritableSlashMenuStore,
+} from "./slash-menu.js";
 import type { ReactBlockDefinition, ReactInlineDefinition } from "./types.js";
 
 /** Props when the schema accepts `{}`, else `{}` (validated on insert). */
@@ -344,6 +349,8 @@ export interface ExtensionOptions {
   messages(): Messages;
   /** AI entry points (`/ai` and `Mod-J`), or `null` without an adapter. */
   readonly ai?: AiEntry | null;
+  /** Receives the slash menu state. */
+  readonly slashMenu: WritableSlashMenuStore;
 }
 
 /** Opens the AI prompt from the slash menu and the keyboard. */
@@ -418,7 +425,7 @@ export function createExtensions(
               aiSlashItem(messages().ai.askAi, ai.ask),
               ...blockSlashItems(registry, messages()),
             ],
-      messages: () => messages().slashMenu,
+      store: options.slashMenu,
     }),
     AiHighlightExtension,
     ...(ai === null

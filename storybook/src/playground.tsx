@@ -9,16 +9,20 @@ import type {
 import { exportPdf } from "@useblocknotes/pdf";
 import {
   type AiMode,
+  type BlockNotesComponents,
   BlockNotesEditor,
   type BlockNotesInstance,
   useBlockNotes,
 } from "@useblocknotes/react";
 import { type ReactNode, useEffect, useState } from "react";
 import { playgroundBlocks } from "./blocks/index.js";
+import { customComponents } from "./custom-ui.js";
 import { createMockAdapter } from "./mock-adapter.js";
 import { sampleDocument } from "./sample-document.js";
 
 const mockAdapter = createMockAdapter();
+
+const NO_COMPONENTS: BlockNotesComponents = {};
 
 /** Props of {@link Playground}. */
 export interface PlaygroundProps {
@@ -27,6 +31,8 @@ export interface PlaygroundProps {
   readonly editable: boolean;
   /** Shows the PDF export panel. */
   readonly pdf: boolean;
+  /** Replaces the slash menu, AI popover and "Ask AI" button with custom ones. */
+  readonly customUi: boolean;
   readonly onChange: (
     operations: readonly Operation[],
     document: BlockNotesDocument,
@@ -39,6 +45,7 @@ export interface PlaygroundProps {
 /** An editor with the example blocks and the mock AI adapter. */
 export function Playground({
   aiMode,
+  customUi,
   pdf,
   ...options
 }: PlaygroundProps): ReactNode {
@@ -52,6 +59,7 @@ export function Playground({
     <div className="sb-playground">
       <BlockNotesEditor
         aiMode={aiMode}
+        components={customUi ? customComponents : NO_COMPONENTS}
         editor={editor}
       />
       {pdf ? (
