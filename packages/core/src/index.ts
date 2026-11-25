@@ -17,6 +17,7 @@ export type {
   TextContext,
 } from "./define.js";
 export { defineBlock, defineInline } from "./define.js";
+export { diffDocuments } from "./diff.js";
 export type {
   Block,
   BlockNotesDocument,
