@@ -17,6 +17,7 @@ import {
 import { type ReactNode, useEffect, useState } from "react";
 import { playgroundBlocks } from "./blocks/index.js";
 import { customComponents } from "./custom-ui.js";
+import { ExternalHotkeys } from "./external-hotkeys.js";
 import { createMockAdapter } from "./mock-adapter.js";
 import { sampleDocument } from "./sample-document.js";
 
@@ -33,6 +34,11 @@ export interface PlaygroundProps {
   readonly pdf: boolean;
   /** Replaces the slash menu, AI popover and "Ask AI" button with custom ones. */
   readonly customUi: boolean;
+  /**
+   * Turns the editor shortcuts off and binds host hotkeys to
+   * `editor.commands`. Read on mount.
+   */
+  readonly externalHotkeys: boolean;
   readonly onChange: (
     operations: readonly Operation[],
     document: BlockNotesDocument,
@@ -46,17 +52,24 @@ export interface PlaygroundProps {
 export function Playground({
   aiMode,
   customUi,
+  externalHotkeys,
   pdf,
   ...options
 }: PlaygroundProps): ReactNode {
   const editor = useBlockNotes({
     ...options,
+    ...(externalHotkeys
+      ? {
+          shortcuts: false,
+        }
+      : {}),
     ai: mockAdapter,
     blocks: playgroundBlocks,
     initialDocument: sampleDocument,
   });
   return (
     <div className="sb-playground">
+      {externalHotkeys ? <ExternalHotkeys editor={editor} /> : null}
       <BlockNotesEditor
         aiMode={aiMode}
         components={customUi ? customComponents : NO_COMPONENTS}

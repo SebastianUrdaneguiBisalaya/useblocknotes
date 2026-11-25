@@ -15,6 +15,7 @@ export {
   paragraph,
   quote,
 } from "./blocks.js";
+export type { BlockNotesCommands } from "./commands.js";
 export type { BlockViewState } from "./context.js";
 export { useBlockView } from "./context.js";
 export type {
@@ -25,6 +26,19 @@ export type {
 export { BlockNotesEditor } from "./editor.js";
 export type { FloatingProps, FloatingReference } from "./floating.js";
 export { useMessages } from "./messages.js";
+export type {
+  KeyboardEventLike,
+  ResolvedShortcuts,
+  Shortcut,
+  ShortcutAction,
+  Shortcuts,
+  ShortcutsOption,
+} from "./shortcuts.js";
+export {
+  defaultShortcuts,
+  matchesShortcut,
+  resolveShortcuts,
+} from "./shortcuts.js";
 export type {
   SlashMenuItem,
   SlashMenuProps,

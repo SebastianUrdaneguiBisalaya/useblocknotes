@@ -8,6 +8,7 @@ import {
   type AskAiButtonProps,
   AskAiHost,
 } from "./ask-ai-button.js";
+import { ShortcutsContext } from "./context.js";
 import { MessagesContext } from "./messages.js";
 import { SlashMenu, SlashMenuHost, type SlashMenuProps } from "./slash-menu.js";
 import type { BlockNotesInstance } from "./use-block-notes.js";
@@ -15,9 +16,10 @@ import type { BlockNotesInstance } from "./use-block-notes.js";
 /**
  * Where the AI prompt is shown.
  *
- * - `popover`: next to the cursor, opened by `/ai`, `Mod-J` or "Ask AI".
+ * - `popover`: next to the cursor, opened by `/ai`, the `openAi` shortcut
+ *   (`Mod-j`) or "Ask AI".
  * - `chat`: a bar fixed at the bottom of the editor, with the history of
- *   requests. `/ai`, `Mod-J` and "Ask AI" focus it.
+ *   requests. `/ai`, `openAi` and "Ask AI" focus it.
  */
 export type AiMode = "popover" | "chat";
 
@@ -93,47 +95,49 @@ export function BlockNotesEditor({
   const askAiButton = pick(components.askAiButton, AskAiButton);
   return (
     <MessagesContext value={editor.messages}>
-      <div
-        className={join("bn-root", className)}
-        data-bn-root=""
-      >
-        <EditorContent
-          className={join("bn-content", contentClassName)}
-          editor={tiptap}
-        />
-        {slashMenu === null ? null : (
-          <SlashMenuHost
-            component={slashMenu}
-            editorElement={tiptap?.view.dom ?? null}
-            store={editor.slashMenu}
+      <ShortcutsContext value={editor.shortcuts}>
+        <div
+          className={join("bn-root", className)}
+          data-bn-root=""
+        >
+          <EditorContent
+            className={join("bn-content", contentClassName)}
+            editor={tiptap}
           />
-        )}
-        {ai.enabled && tiptap !== null && askAiButton !== null ? (
-          <AskAiHost
-            ai={ai}
-            className={askAiClassName}
-            component={askAiButton}
-            tiptap={tiptap}
-          />
-        ) : null}
-        {ai.enabled && aiMode === "chat" && ChatBar !== null ? (
-          <ChatBar
-            ai={ai}
-            className={aiChatClassName}
-          />
-        ) : null}
-        {ai.open &&
-        aiMode === "popover" &&
-        tiptap !== null &&
-        aiPopover !== null ? (
-          <AiPopoverHost
-            ai={ai}
-            className={aiPopoverClassName}
-            component={aiPopover}
-            tiptap={tiptap}
-          />
-        ) : null}
-      </div>
+          {slashMenu === null ? null : (
+            <SlashMenuHost
+              component={slashMenu}
+              editorElement={tiptap?.view.dom ?? null}
+              store={editor.slashMenu}
+            />
+          )}
+          {ai.enabled && tiptap !== null && askAiButton !== null ? (
+            <AskAiHost
+              ai={ai}
+              className={askAiClassName}
+              component={askAiButton}
+              tiptap={tiptap}
+            />
+          ) : null}
+          {ai.enabled && aiMode === "chat" && ChatBar !== null ? (
+            <ChatBar
+              ai={ai}
+              className={aiChatClassName}
+            />
+          ) : null}
+          {ai.open &&
+          aiMode === "popover" &&
+          tiptap !== null &&
+          aiPopover !== null ? (
+            <AiPopoverHost
+              ai={ai}
+              className={aiPopoverClassName}
+              component={aiPopover}
+              tiptap={tiptap}
+            />
+          ) : null}
+        </div>
+      </ShortcutsContext>
     </MessagesContext>
   );
 }

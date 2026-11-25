@@ -1,5 +1,7 @@
-import { type ReactNode, useEffect, useRef, useState } from "react";
+import { type ReactNode, useContext, useEffect, useRef, useState } from "react";
+import { ShortcutsContext } from "./context.js";
 import { useMessages } from "./messages.js";
+import { type KeyboardEventLike, matchesShortcut } from "./shortcuts.js";
 import type { AiController } from "./use-ai.js";
 
 /** `true` while a request is waiting for or receiving events. */
@@ -8,12 +10,17 @@ export function isRunning(ai: AiController): boolean {
 }
 
 /**
- * @internal Escape closes an empty prompt or stops a running stream. Returns
- * a `keydown` handler for the AI container.
+ * @internal The `aiClose` shortcut (Escape) closes an empty prompt or stops a
+ * running stream. Returns a `keydown` handler for the AI container.
  */
-export function escapeHandler(ai: AiController) {
-  return (event: { readonly key: string; preventDefault(): void }) => {
-    if (event.key !== "Escape") {
+export function useCloseHandler(ai: AiController) {
+  const keys = useContext(ShortcutsContext).aiClose;
+  return (
+    event: KeyboardEventLike & {
+      preventDefault(): void;
+    },
+  ) => {
+    if (!matchesShortcut(event, keys)) {
       return;
     }
     if (ai.status === "idle" && ai.open) {
@@ -35,8 +42,8 @@ interface AiComposerProps {
 }
 
 /**
- * @internal Instruction input. Enter sends, Shift+Enter adds a line. Disabled
- * while a request is pending.
+ * @internal Instruction input. The `aiSubmit` shortcut (Enter) sends; other
+ * keys, like Shift+Enter, type as usual. Disabled while a request is pending.
  */
 export function AiComposer({
   ai,
@@ -44,6 +51,7 @@ export function AiComposer({
   focus,
 }: AiComposerProps): ReactNode {
   const messages = useMessages().ai;
+  const submitKeys = useContext(ShortcutsContext).aiSubmit;
   const [instruction, setInstruction] = useState("");
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const disabled = ai.status !== "idle";
@@ -79,9 +87,8 @@ export function AiComposer({
         onChange={(event) => setInstruction(event.target.value)}
         onKeyDown={(event) => {
           if (
-            event.key === "Enter" &&
-            !event.shiftKey &&
-            !event.nativeEvent.isComposing
+            !event.nativeEvent.isComposing &&
+            matchesShortcut(event, submitKeys)
           ) {
             event.preventDefault();
             submit();

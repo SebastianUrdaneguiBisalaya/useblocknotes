@@ -2,9 +2,54 @@
 
 React 19 components and hooks for useblocknotes.
 
+## Keyboard shortcuts
+
+Every shortcut can be changed or turned off with the `shortcuts` option of `useBlockNotes()`, read once on mount. Pass `false` to turn them all off, or an object to change only some actions: one key, several keys, or `false` for none.
+
+```tsx
+const editor = useBlockNotes({
+  shortcuts: {
+    openAi: "Mod-k",
+    moveBlockUp: false,
+    toggleBold: ["Mod-b", "Mod-Shift-b"],
+  },
+});
+```
+
+Keys use ProseMirror notation: modifiers joined with `-` before a `KeyboardEvent.key` name, for example `Mod-Shift-ArrowUp`. `Mod` is Cmd on macOS and Ctrl elsewhere; the other modifiers are `Shift`, `Alt`, `Ctrl` and `Meta`. Modifiers must match exactly, so `Enter` does not match Shift+Enter.
+
+| Action | Default | Command |
+| --- | --- | --- |
+| `openAi` | `Mod-j` | `openAi()` |
+| `moveBlockUp` / `moveBlockDown` | `Mod-Shift-ArrowUp` / `Mod-Shift-ArrowDown` | `moveBlockUp()` / `moveBlockDown()` |
+| `indent` / `outdent` (list items) | `Tab` / `Shift-Tab` | `indent()` / `outdent()` |
+| `toggleBold`, `toggleItalic`, `toggleUnderline` | `Mod-b`, `Mod-i`, `Mod-u` | same name |
+| `toggleStrike`, `toggleCode` | `Mod-Shift-s`, `Mod-e` | same name |
+| `undo` / `redo` | `Mod-z` / `Mod-y`, `Mod-Shift-z` | `undo()` / `redo()` |
+| `enter` | `Enter`: continues or ends lists, leaves code blocks, starts paragraphs. When off, Enter only splits the block. | |
+| `backspace` | `Backspace` at the start of a block: outdents list items, turns blocks into paragraphs. When off, Backspace only joins blocks. | |
+| `slashMenuUp` / `slashMenuDown` | `ArrowUp` / `ArrowDown` | `select()`, `highlight()` and `close()` in the slash menu state |
+| `slashMenuSelect` | `Enter`, `Tab` | |
+| `slashMenuClose` | `Escape` | |
+| `aiSubmit` | `Enter` in the built-in AI prompt | `editor.ai.start()` |
+| `aiClose` | `Escape` in the built-in AI prompt: closes it while empty, or stops a running stream | `editor.ai.reject()`, `editor.ai.cancel()` |
+
+### Using your own hotkey library
+
+Turn the editor's shortcuts off and run the same actions through `editor.commands`. Each command returns `true` when it did something, and does nothing before the editor mounts or while it is read-only.
+
+```tsx
+const editor = useBlockNotes({ shortcuts: false });
+
+useHotkeys("mod+j", () => editor.commands.openAi());
+useHotkeys("mod+shift+up", () => editor.commands.moveBlockUp());
+```
+
+`editor.shortcuts` holds the resolved keys, and `matchesShortcut(event, keys)` checks a keyboard event against them, for example in a custom AI prompt.
+
 ## Custom UI components
 
-The slash menu, the AI popover, the AI chat bar and the "Ask AI" button can be replaced with your own components through the `components` prop of `<BlockNotesEditor />`. Omit a key to keep the built-in component, or pass `null` to render nothing. The editor keeps the logic (filtering, arrow keys, Enter and Tab in the slash menu, AI state, accept and reject) and passes it as props.
+The slash menu, the AI popover, the AI chat bar and the "Ask AI" button can be replaced with your own components through the `components` prop of `<BlockNotesEditor />`. Omit a key to keep the built-in component, or pass `null` to render nothing. The editor keeps the logic (filtering, the slash menu keys, AI state, accept and reject) and passes it as props.
 
 ```tsx
 import {

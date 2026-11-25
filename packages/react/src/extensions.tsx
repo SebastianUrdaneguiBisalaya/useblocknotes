@@ -39,8 +39,14 @@ import { safeParse } from "zod/v4/core";
 import { AiHighlightExtension } from "./ai-session.js";
 import { BlockViewContext } from "./context.js";
 import { BLOCK_GROUP, nodeToBlock, TITLE_NODE } from "./convert.js";
-import { BlockKeymap, ListNumbers, listNumberOf } from "./lists.js";
-import { BlockMove, DragHandle } from "./move.js";
+import { BlockInputRules, ListNumbers, listNumberOf } from "./lists.js";
+import { DragHandle } from "./move.js";
+import {
+  defaultShortcuts,
+  type ResolvedShortcuts,
+  resolveShortcuts,
+} from "./shortcuts.js";
+import { createShortcuts } from "./shortcuts-extension.js";
 import {
   aiSlashItem,
   blockSlashItems,
@@ -347,10 +353,12 @@ const BlockIds = Extension.create({
 export interface ExtensionOptions {
   /** Current UI messages; read each time a text is shown. */
   messages(): Messages;
-  /** AI entry points (`/ai` and `Mod-J`), or `null` without an adapter. */
+  /** AI entry points (`/ai` and `openAi`), or `null` without an adapter. */
   readonly ai?: AiEntry | null;
   /** Receives the slash menu state. */
   readonly slashMenu: WritableSlashMenuStore;
+  /** Keyboard shortcuts. Defaults to {@link defaultShortcuts}. */
+  readonly shortcuts?: ResolvedShortcuts;
 }
 
 /** Opens the AI prompt from the slash menu and the keyboard. */
@@ -359,17 +367,12 @@ export interface AiEntry {
   ask(): void;
 }
 
-function aiShortcut(entry: AiEntry): AnyExtension {
-  return Extension.create({
-    addKeyboardShortcuts() {
-      return {
-        "Mod-j": () => {
-          entry.ask();
-          return true;
-        },
-      };
-    },
-    name: "blockNotesAiShortcut",
+/** Drops an extension's built-in keyboard shortcuts; they are bound in `createShortcuts()`. */
+function withoutShortcuts<TExtension extends AnyExtension>(
+  extension: TExtension,
+): AnyExtension {
+  return extension.extend({
+    addKeyboardShortcuts: () => ({}),
   });
 }
 
@@ -380,6 +383,7 @@ export function createExtensions(
 ): Extensions {
   const { messages } = options;
   const ai = options.ai ?? null;
+  const shortcuts = options.shortcuts ?? resolveShortcuts();
   return [
     Document.extend({
       content: `${TITLE_NODE} ${BLOCK_GROUP}*`,
@@ -392,16 +396,16 @@ export function createExtensions(
     ...[
       ...registry.inlines.values(),
     ].map(inlineNode),
-    Bold,
-    Italic,
-    Underline,
-    Strike,
-    Code,
+    withoutShortcuts(Bold),
+    withoutShortcuts(Italic),
+    withoutShortcuts(Underline),
+    withoutShortcuts(Strike),
+    withoutShortcuts(Code),
     Link.configure({
       autolink: true,
       openOnClick: false,
     }),
-    UndoRedo,
+    withoutShortcuts(UndoRedo),
     Dropcursor,
     Gapcursor,
     Placeholder.configure({
@@ -415,8 +419,11 @@ export function createExtensions(
     }),
     BlockIds,
     ListNumbers,
-    BlockKeymap,
-    BlockMove,
+    BlockInputRules,
+    createShortcuts({
+      ask: ai === null ? null : ai.ask,
+      shortcuts,
+    }),
     createSlashMenu({
       items: () =>
         ai === null
@@ -425,13 +432,9 @@ export function createExtensions(
               aiSlashItem(messages().ai.askAi, ai.ask),
               ...blockSlashItems(registry, messages()),
             ],
+      shortcuts,
       store: options.slashMenu,
     }),
     AiHighlightExtension,
-    ...(ai === null
-      ? []
-      : [
-          aiShortcut(ai),
-        ]),
   ];
 }

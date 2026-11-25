@@ -17,8 +17,14 @@ import {
 } from "@useblocknotes/core";
 import { type ReactNode, useEffect, useMemo, useRef, useState } from "react";
 import { defaultBlocks } from "./blocks.js";
+import { type BlockNotesCommands, createCommands } from "./commands.js";
 import { documentToJSON, nodeToDocument } from "./convert.js";
 import { createExtensions } from "./extensions.js";
+import {
+  type ResolvedShortcuts,
+  resolveShortcuts,
+  type ShortcutsOption,
+} from "./shortcuts.js";
 import { createSlashMenuStore, type SlashMenuStore } from "./slash-menu.js";
 import { applyOperationsToTransaction } from "./transaction.js";
 import type { ReactBlockDefinition, ReactInlineDefinition } from "./types.js";
@@ -80,6 +86,18 @@ export interface UseBlockNotesOptions extends AiOptions {
   readonly baseVersion?: string | number;
   /** Milliseconds without edits before `onChange` fires. Defaults to 500. */
   readonly changeDebounceMs?: number;
+  /**
+   * Keyboard shortcuts. `false` turns them all off (for example to bind the
+   * actions with your own hotkey library through `editor.commands`); an
+   * object changes only the actions it lists, with a key, several keys or
+   * `false`. Read once, on mount. Defaults to `defaultShortcuts`.
+   *
+   * @example
+   * ```ts
+   * { shortcuts: { openAi: "Mod-k", moveBlockUp: false } }
+   * ```
+   */
+  readonly shortcuts?: ShortcutsOption;
 }
 
 /** Extra data passed to `onChange`. */
@@ -103,6 +121,10 @@ export interface BlockNotesInstance {
    * slash menu outside `<BlockNotesEditor />`.
    */
   readonly slashMenu: SlashMenuStore;
+  /** Keys of every shortcut, after applying the `shortcuts` option. */
+  readonly shortcuts: ResolvedShortcuts;
+  /** Actions that have shortcuts, to run them from your own hotkeys. */
+  readonly commands: BlockNotesCommands;
   /**
    * Returns the current document. While an AI batch is pending, returns the
    * document without it.
@@ -185,7 +207,9 @@ export function useBlockNotes(
       throw new InvalidDocumentError(validated.error);
     }
     const slashMenu = createSlashMenuStore();
+    const shortcuts = resolveShortcuts(options.shortcuts);
     return {
+      aiEnabled: options.ai !== undefined,
       document: validated.value,
       extensions: createExtensions(registry, {
         ai:
@@ -195,9 +219,11 @@ export function useBlockNotes(
                 ask: () => askAiRef.current(),
               },
         messages: () => messagesRef.current,
+        shortcuts,
         slashMenu,
       }),
       registry,
+      shortcuts,
       slashMenu,
     };
   });
@@ -334,6 +360,10 @@ export function useBlockNotes(
         }
         return result;
       },
+      commands: createCommands(
+        () => tiptap,
+        () => (setup.aiEnabled ? askAiRef.current : null),
+      ),
       flushChanges() {
         flushRef.current?.();
       },
@@ -344,6 +374,7 @@ export function useBlockNotes(
       },
       messages,
       registry: setup.registry,
+      shortcuts: setup.shortcuts,
       slashMenu: setup.slashMenu,
       tiptap,
     }),

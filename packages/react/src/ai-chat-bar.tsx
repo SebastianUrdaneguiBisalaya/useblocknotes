@@ -3,8 +3,8 @@ import { type ReactNode, useEffect, useRef } from "react";
 import {
   AiComposer,
   AiStatusLine,
-  escapeHandler,
   join,
+  useCloseHandler,
 } from "./ai-controls.js";
 import { useMessages } from "./messages.js";
 import type { AiController, AiHistoryEntry } from "./use-ai.js";
@@ -57,6 +57,7 @@ function HistoryEntry({
 export function AiChatBar({ ai, className }: AiChatBarProps): ReactNode {
   const { history } = ai;
   const messages = useMessages().ai;
+  const onKeyDown = useCloseHandler(ai);
   const historyRef = useRef<HTMLOListElement>(null);
   const last = history.at(-1);
 
@@ -75,7 +76,7 @@ export function AiChatBar({ ai, className }: AiChatBarProps): ReactNode {
       aria-label={messages.label}
       className={join("bn-ai-chat", className)}
       data-bn-ai-status={ai.status}
-      onKeyDown={escapeHandler(ai)}
+      onKeyDown={onKeyDown}
     >
       {history.length === 0 ? null : (
         <ol

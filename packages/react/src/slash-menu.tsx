@@ -1,5 +1,10 @@
 import { type Editor, Extension, type Range } from "@tiptap/core";
-import { NodeSelection, PluginKey, TextSelection } from "@tiptap/pm/state";
+import {
+  NodeSelection,
+  Plugin,
+  PluginKey,
+  TextSelection,
+} from "@tiptap/pm/state";
 import Suggestion, { exitSuggestion } from "@tiptap/suggestion";
 import type { BlockProps, BlockRegistry, Messages } from "@useblocknotes/core";
 import {
@@ -16,6 +21,7 @@ import {
   useFloating,
 } from "./floating.js";
 import { useMessages } from "./messages.js";
+import { matchesShortcut, type ResolvedShortcuts } from "./shortcuts.js";
 
 /** An entry of the slash menu, as shown to a slash menu component. */
 export interface SlashMenuItem {
@@ -178,8 +184,9 @@ export interface SlashMenuState {
   /** Text typed after `/`. */
   readonly query: string;
   /**
-   * Highlighted entry. Arrow keys move it, and Enter or Tab run it; the
-   * editor handles those keys.
+   * Highlighted entry. The `slashMenuUp`, `slashMenuDown` and
+   * `slashMenuSelect` shortcuts (arrows, Enter and Tab by default) move and
+   * run it; the editor handles those keys.
    */
   readonly selectedIndex: number;
   /** Position of the typed `/query`. */
@@ -231,6 +238,37 @@ export interface SlashMenuOptions {
   items(): readonly SlashItem[];
   /** Receives the menu state for `<BlockNotesEditor />` to render. */
   readonly store: WritableSlashMenuStore;
+  /** Keys that move, run and close the menu. */
+  readonly shortcuts: ResolvedShortcuts;
+}
+
+/**
+ * Handles the menu keys while it is open. Every other key reaches the editor,
+ * except Escape, which the suggestion plugin would always use to close.
+ */
+function handleMenuKey(
+  menu: SlashMenuState,
+  event: KeyboardEvent,
+  shortcuts: ResolvedShortcuts,
+): boolean {
+  const count = menu.items.length;
+  if (matchesShortcut(event, shortcuts.slashMenuClose)) {
+    menu.close();
+    return true;
+  }
+  if (count > 0 && matchesShortcut(event, shortcuts.slashMenuDown)) {
+    menu.highlight((menu.selectedIndex + 1) % count);
+    return true;
+  }
+  if (count > 0 && matchesShortcut(event, shortcuts.slashMenuUp)) {
+    menu.highlight((menu.selectedIndex - 1 + count) % count);
+    return true;
+  }
+  if (count > 0 && matchesShortcut(event, shortcuts.slashMenuSelect)) {
+    menu.select(menu.selectedIndex);
+    return true;
+  }
+  return event.key === "Escape" || event.key === "Esc";
 }
 
 const slashMenuKey = new PluginKey("blockNotesSlashMenu");
@@ -242,11 +280,20 @@ const slashMenuKey = new PluginKey("blockNotesSlashMenu");
  * `<BlockNotesEditor />` renders it.
  */
 export function createSlashMenu(options: SlashMenuOptions): Extension {
-  const { store } = options;
+  const { shortcuts, store } = options;
   return Extension.create({
     addProseMirrorPlugins() {
       const editor = this.editor;
       return [
+        new Plugin({
+          key: new PluginKey("blockNotesSlashMenuKeys"),
+          props: {
+            handleKeyDown: (_view, event) => {
+              const menu = store.getState();
+              return menu !== null && handleMenuKey(menu, event, shortcuts);
+            },
+          },
+        }),
         Suggestion<SlashItem, SlashItem>({
           allow: ({ range, state }) => {
             const $from = state.doc.resolve(range.from);
@@ -305,22 +352,6 @@ export function createSlashMenu(options: SlashMenuOptions): Extension {
                 reference = null;
                 store.setState(null);
               },
-              onKeyDown: ({ event }) => {
-                if (items.length === 0) {
-                  return false;
-                }
-                if (event.key === "ArrowDown" || event.key === "ArrowUp") {
-                  const step = event.key === "ArrowDown" ? 1 : -1;
-                  selected = (selected + step + items.length) % items.length;
-                  publish();
-                  return true;
-                }
-                if (event.key === "Enter" || event.key === "Tab") {
-                  select(selected);
-                  return true;
-                }
-                return false;
-              },
               onStart: (suggestion) => {
                 items = suggestion.items;
                 query = suggestion.query;
@@ -348,6 +379,8 @@ export function createSlashMenu(options: SlashMenuOptions): Extension {
       ];
     },
     name: "blockNotesSlashMenu",
+    // Menu keys run before the editor shortcuts (Enter, Tab, arrows).
+    priority: 1100,
   });
 }
 

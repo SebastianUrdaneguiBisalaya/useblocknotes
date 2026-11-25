@@ -150,7 +150,8 @@ function convert(
   return true;
 }
 
-function changeIndent(tr: Transaction, delta: number): boolean {
+/** @internal Indents (`1`) or outdents (`-1`) the current list item. */
+export function changeIndent(tr: Transaction, delta: number): boolean {
   const block = currentBlock(tr);
   if (block === null || !isList(block.node)) {
     return false;
@@ -266,7 +267,8 @@ export function handleEnter(tr: Transaction): boolean {
   return enterParagraph(tr);
 }
 
-function handleBackspace(tr: Transaction): boolean {
+/** @internal Backspace at the start of a block: outdents or turns it into a paragraph. */
+export function handleBackspace(tr: Transaction): boolean {
   const block = currentBlock(tr);
   if (
     block === null ||
@@ -314,13 +316,11 @@ function shortcut(
 }
 
 /**
- * @internal Notion-like keys for built-in blocks: Enter continues or ends
- * lists and starts a paragraph after any other text block or the title, Tab
- * and Shift-Tab indent list items, Backspace at the start turns a block into
- * a paragraph, Enter on two empty lines leaves a code block, and Markdown
- * shortcuts (`- `, `1. `, `> `, ```` ``` ````, `# `) convert paragraphs.
+ * @internal Markdown shortcuts (`- `, `1. `, `> `, ```` ``` ````, `# `) that
+ * convert paragraphs. The Enter, Backspace and Tab behaviors are bound in
+ * `shortcuts-extension.ts`.
  */
-export const BlockKeymap = Extension.create({
+export const BlockInputRules = Extension.create({
   addInputRules() {
     return [
       shortcut(/^\s*[-+*]\s$/, BULLET, () => ({
@@ -338,17 +338,5 @@ export const BlockKeymap = Extension.create({
       })),
     ];
   },
-  addKeyboardShortcuts() {
-    return {
-      Backspace: () =>
-        this.editor.commands.command(({ tr }) => handleBackspace(tr)),
-      Enter: () => this.editor.commands.command(({ tr }) => handleEnter(tr)),
-      "Shift-Tab": () =>
-        this.editor.commands.command(({ tr }) => changeIndent(tr, -1)),
-      Tab: () => this.editor.commands.command(({ tr }) => changeIndent(tr, 1)),
-    };
-  },
-  name: "blockNotesKeymap",
-  // Run before Tiptap's default Enter and Backspace handling.
-  priority: 1000,
+  name: "blockNotesInputRules",
 });
