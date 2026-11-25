@@ -103,7 +103,11 @@ export function applyOperationsToTransaction<TNode>(
           break;
         }
         const block = finalBlocks.get(operation.id);
-        if (operation.content === undefined && block !== undefined) {
+        if (
+          operation.type === undefined &&
+          operation.content === undefined &&
+          block !== undefined
+        ) {
           tr.setNodeMarkup(found.pos, undefined, {
             ...found.node.attrs,
             props: block.props,

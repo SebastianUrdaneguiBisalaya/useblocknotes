@@ -4,13 +4,14 @@ import {
   type BlockNotesDocument,
   type BlockRegistry,
   createRegistry,
+  diffDocuments,
   type Operation,
   type OperationError,
   type Result,
   type ValidationIssue,
   validateDocument,
 } from "@useblocknotes/core";
-import { type ReactNode, useEffect, useMemo, useState } from "react";
+import { type ReactNode, useEffect, useMemo, useRef, useState } from "react";
 import { defaultBlocks } from "./blocks.js";
 import { documentToJSON, nodeToDocument } from "./convert.js";
 import { createExtensions, type Placeholders } from "./extensions.js";
@@ -44,6 +45,31 @@ export interface UseBlockNotesOptions {
   readonly placeholders?: Partial<Placeholders>;
   /** Slash menu texts. */
   readonly slashMenu?: Partial<SlashMenuMessages>;
+  /**
+   * Called with the operations of every batch of edits (manual, pasted,
+   * dragged or applied with `applyOperations()`) and the resulting document,
+   * after `changeDebounceMs` without edits, on blur, on `flushChanges()` and on
+   * unmount. Always reads the latest callback.
+   */
+  readonly onChange?: (
+    operations: readonly Operation[],
+    document: BlockNotesDocument,
+    meta: ChangeMeta,
+  ) => void;
+  /**
+   * Version of the document the host last saved (for example a revision
+   * number). Forwarded in `onChange` so the host can detect conflicts. Update
+   * it after each save.
+   */
+  readonly baseVersion?: string | number;
+  /** Milliseconds without edits before `onChange` fires. Defaults to 500. */
+  readonly changeDebounceMs?: number;
+}
+
+/** Extra data passed to `onChange`. */
+export interface ChangeMeta {
+  /** The `baseVersion` option when the batch was emitted, or `null`. */
+  readonly baseVersion: string | number | null;
 }
 
 /** An editor instance returned by `useBlockNotes()`. */
@@ -54,6 +80,8 @@ export interface BlockNotesInstance {
   readonly registry: BlockRegistry<ReactNode>;
   /** Returns the current document. */
   getDocument(): BlockNotesDocument;
+  /** Emits pending changes to `onChange` now instead of waiting. */
+  flushChanges(): void;
   /**
    * Validates and applies operations as a single undo step. All-or-nothing:
    * returns the first error and changes nothing if any operation fails.
@@ -67,6 +95,8 @@ const EMPTY_DOCUMENT: BlockNotesDocument = {
   blocks: [],
   title: "",
 };
+
+const DEFAULT_DEBOUNCE_MS = 500;
 
 const DEFAULT_SLASH_MENU: SlashMenuMessages = {
   empty: "No results",
@@ -130,6 +160,63 @@ export function useBlockNotes(
     shouldRerenderOnTransaction: false,
   });
 
+  const latest = useRef({
+    baseVersion: options.baseVersion,
+    debounce: options.changeDebounceMs ?? DEFAULT_DEBOUNCE_MS,
+    onChange: options.onChange,
+  });
+  useEffect(() => {
+    latest.current = {
+      baseVersion: options.baseVersion,
+      debounce: options.changeDebounceMs ?? DEFAULT_DEBOUNCE_MS,
+      onChange: options.onChange,
+    };
+  });
+
+  const flushRef = useRef<(() => void) | null>(null);
+  useEffect(() => {
+    if (tiptap === null) {
+      return;
+    }
+    // Last document reported to (or loaded by) the host.
+    let saved = nodeToDocument(tiptap.state.doc);
+    let timer: ReturnType<typeof setTimeout> | null = null;
+
+    const flush = () => {
+      if (timer !== null) {
+        clearTimeout(timer);
+        timer = null;
+      }
+      const current = nodeToDocument(tiptap.state.doc);
+      const operations = diffDocuments(saved, current);
+      if (operations.length === 0) {
+        return;
+      }
+      saved = current;
+      latest.current.onChange?.(operations, current, {
+        baseVersion: latest.current.baseVersion ?? null,
+      });
+    };
+    const schedule = () => {
+      if (timer !== null) {
+        clearTimeout(timer);
+      }
+      timer = setTimeout(flush, latest.current.debounce);
+    };
+
+    tiptap.on("update", schedule);
+    tiptap.on("blur", flush);
+    flushRef.current = flush;
+    return () => {
+      tiptap.off("update", schedule);
+      tiptap.off("blur", flush);
+      flush();
+      flushRef.current = null;
+    };
+  }, [
+    tiptap,
+  ]);
+
   useEffect(() => {
     if (tiptap !== null && tiptap.isEditable !== editable) {
       tiptap.setEditable(editable);
@@ -161,6 +248,9 @@ export function useBlockNotes(
           tiptap.view.dispatch(tr);
         }
         return result;
+      },
+      flushChanges() {
+        flushRef.current?.();
       },
       getDocument() {
         return tiptap === null

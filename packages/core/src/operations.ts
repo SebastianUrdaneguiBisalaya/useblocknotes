@@ -26,12 +26,17 @@ export interface InsertOperation {
 }
 
 /**
- * Updates a block. `props` are shallow-merged into the current props;
- * `content` replaces the current inline content.
+ * Updates a block, keeping its id.
+ *
+ * - Without `type`: `props` are shallow-merged into the current props and
+ *   `content`, when given, replaces the current inline content.
+ * - With `type`: the block is replaced (for example a paragraph turned into a
+ *   heading). `props` default to `{}` and `content` to none.
  */
 export interface UpdateOperation {
   readonly op: "update";
   readonly id: string;
+  readonly type?: string;
   readonly props?: BlockProps;
   readonly content?: readonly InlineNode[];
 }
@@ -127,6 +132,7 @@ const operationSchema = z.discriminatedUnion("op", [
     id: idSchema,
     op: z.literal("update"),
     props: z.exactOptional(propsSchema),
+    type: z.exactOptional(z.string().check(z.minLength(1))),
   }),
   z.object({
     id: idSchema,
@@ -268,14 +274,17 @@ export function applyOperations<TNode = null>(
             index,
           });
         }
-        const content = op.content ?? current.content;
+        const replace = op.type !== undefined;
+        const content = replace ? op.content : (op.content ?? current.content);
         const next: Block = {
           id: current.id,
-          props: {
-            ...current.props,
-            ...op.props,
-          },
-          type: current.type,
+          props: replace
+            ? (op.props ?? {})
+            : {
+                ...current.props,
+                ...op.props,
+              },
+          type: op.type ?? current.type,
           ...(content === undefined
             ? {}
             : {
