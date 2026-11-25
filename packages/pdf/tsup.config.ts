@@ -17,7 +17,10 @@ export default defineConfig({
   },
 
   external: [
+    "@react-pdf/renderer",
     "@useblocknotes/core",
+    "react",
+    "react/jsx-runtime",
   ],
 
   format: [
@@ -35,7 +38,8 @@ export default defineConfig({
     };
   },
 
-  platform: "browser",
+  // Runs in browsers and Node; react-pdf picks its own build per platform.
+  platform: "neutral",
 
   skipNodeModulesBundle: true,
 
