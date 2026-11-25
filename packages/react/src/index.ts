@@ -14,6 +14,7 @@ export { useBlockView } from "./context.js";
 export type { BlockNotesEditorProps } from "./editor.js";
 export { BlockNotesEditor } from "./editor.js";
 export type { Placeholders } from "./extensions.js";
+export type { SlashMenuMessages } from "./slash-menu.js";
 export type { ReactBlockDefinition, ReactInlineDefinition } from "./types.js";
 export type {
   BlockNotesInstance,

@@ -97,6 +97,7 @@
     "zod": "catalog:"
   },
   "dependencies": {
+    "@floating-ui/dom": "1.8.0",
     "@tiptap/core": "3.35.0",
     "@tiptap/extension-bold": "3.35.0",
     "@tiptap/extension-code": "3.35.0",
@@ -108,6 +109,7 @@
     "@tiptap/extension-underline": "3.35.0",
     "@tiptap/extensions": "3.35.0",
     "@tiptap/pm": "3.35.0",
-    "@tiptap/react": "3.35.0"
+    "@tiptap/react": "3.35.0",
+    "@tiptap/suggestion": "3.35.0"
   }
 }

@@ -46,8 +46,14 @@ const registry = createRegistry<ReactNode>({
 
 const schema = getSchema(
   createExtensions(registry, {
-    block: "",
-    title: "",
+    placeholders: {
+      block: "",
+      title: "",
+    },
+    slashMenu: {
+      empty: "",
+      label: "",
+    },
   }),
 );
 

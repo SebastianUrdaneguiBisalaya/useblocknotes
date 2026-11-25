@@ -14,6 +14,7 @@ import { type ReactNode, useEffect, useMemo, useState } from "react";
 import { defaultBlocks } from "./blocks.js";
 import { documentToJSON, nodeToDocument } from "./convert.js";
 import { createExtensions, type Placeholders } from "./extensions.js";
+import type { SlashMenuMessages } from "./slash-menu.js";
 import { applyOperationsToTransaction } from "./transaction.js";
 import type { ReactBlockDefinition, ReactInlineDefinition } from "./types.js";
 
@@ -41,6 +42,8 @@ export interface UseBlockNotesOptions {
   readonly editable?: boolean;
   /** Placeholder texts. */
   readonly placeholders?: Partial<Placeholders>;
+  /** Slash menu texts. */
+  readonly slashMenu?: Partial<SlashMenuMessages>;
 }
 
 /** An editor instance returned by `useBlockNotes()`. */
@@ -63,6 +66,11 @@ export interface BlockNotesInstance {
 const EMPTY_DOCUMENT: BlockNotesDocument = {
   blocks: [],
   title: "",
+};
+
+const DEFAULT_SLASH_MENU: SlashMenuMessages = {
+  empty: "No results",
+  label: "Insert block",
 };
 
 const DEFAULT_PLACEHOLDERS: Placeholders = {
@@ -101,8 +109,14 @@ export function useBlockNotes(
     return {
       document: validated.value,
       extensions: createExtensions(registry, {
-        ...DEFAULT_PLACEHOLDERS,
-        ...options.placeholders,
+        placeholders: {
+          ...DEFAULT_PLACEHOLDERS,
+          ...options.placeholders,
+        },
+        slashMenu: {
+          ...DEFAULT_SLASH_MENU,
+          ...options.slashMenu,
+        },
       }),
       registry,
     };

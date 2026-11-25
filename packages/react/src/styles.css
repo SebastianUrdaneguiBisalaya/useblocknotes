@@ -188,3 +188,54 @@
 .bn-root .ProseMirror {
   padding-inline-start: var(--bn-drag-handle-offset, 1.5rem);
 }
+
+.bn-slash-menu {
+  z-index: var(--bn-menu-z-index, 50);
+  min-width: 14rem;
+  max-height: 20rem;
+  padding: 0.25rem;
+  overflow-y: auto;
+  color: var(--bn-menu-color, inherit);
+  background: var(--bn-menu-background, Canvas);
+  border: 1px solid
+    var(
+      --bn-menu-border-color,
+      color-mix(in srgb, currentColor 15%, transparent)
+    );
+  border-radius: var(--bn-menu-radius, 0.5rem);
+  box-shadow: var(--bn-menu-shadow, 0 8px 24px rgb(0 0 0 / 12%));
+}
+
+.bn-slash-item {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  padding: 0.375rem 0.5rem;
+  cursor: pointer;
+  border-radius: 0.375rem;
+}
+
+.bn-slash-item[data-selected] {
+  background: var(
+    --bn-menu-active-background,
+    color-mix(in srgb, currentColor 8%, transparent)
+  );
+}
+
+.bn-slash-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--bn-muted-color);
+  border: 1px solid color-mix(in srgb, currentColor 15%, transparent);
+  border-radius: 0.375rem;
+}
+
+.bn-slash-empty {
+  padding: 0.5rem;
+  color: var(--bn-muted-color);
+}
