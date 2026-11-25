@@ -1,0 +1,37 @@
+{
+  // Playground: the shared base plus DOM types and JSX. Resolves the workspace
+  // packages to their source, like the Vite aliases in `.storybook/main.ts`.
+  "$schema": "https://json.schemastore.org/tsconfig",
+  "compilerOptions": {
+    "declaration": false,
+    "declarationMap": false,
+    "jsx": "react-jsx",
+    "lib": [
+      "ES2023",
+      "ESNext.Temporal",
+      "DOM",
+      "DOM.Iterable"
+    ],
+    "paths": {
+      "@useblocknotes/core": [
+        "../packages/core/src/index.ts"
+      ],
+      "@useblocknotes/pdf": [
+        "../packages/pdf/src/index.ts"
+      ],
+      "@useblocknotes/react": [
+        "../packages/react/src/index.ts"
+      ]
+    },
+    "sourceMap": false
+  },
+  "exclude": [
+    "node_modules",
+    "dist"
+  ],
+  "extends": "../tsconfig.base.json",
+  "include": [
+    "src",
+    ".storybook"
+  ]
+}

@@ -1,0 +1,30 @@
+{
+  "name": "@useblocknotes/storybook",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Offline Storybook playground for useblocknotes, with example blocks and a mock AI adapter.",
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "dev": "storybook dev --port 6006 --no-open --disable-telemetry --no-version-updates",
+    "build": "storybook build --disable-telemetry --output-dir dist",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@react-pdf/renderer": "4.9.1",
+    "@storybook/react-vite": "10.6.9",
+    "@types/react": "catalog:",
+    "@types/react-dom": "catalog:",
+    "@useblocknotes/core": "workspace:*",
+    "@useblocknotes/pdf": "workspace:*",
+    "@useblocknotes/react": "workspace:*",
+    "@vitejs/plugin-react": "6.3.0",
+    "react": "catalog:",
+    "react-dom": "catalog:",
+    "recharts": "3.11.1",
+    "storybook": "10.6.9",
+    "typescript": "catalog:",
+    "vite": "8.3.8",
+    "zod": "catalog:"
+  }
+}
