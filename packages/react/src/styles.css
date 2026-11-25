@@ -1,13 +1,22 @@
 /*
  * Optional base styles for @useblocknotes/react.
  * Import with: import "@useblocknotes/react/styles.css";
- * Override any --bn-* variable on .bn-root (or an ancestor) to theme it.
+ *
+ * Light and dark themes are built in. Every color uses light-dark(), so it
+ * follows the color-scheme of .bn-root:
+ * - by default, the operating system preference (`light dark`);
+ * - `--bn-color-scheme` on .bn-root or an ancestor, e.g. `dark`;
+ * - `data-bn-theme="light" | "dark"` on .bn-root (the `theme` prop).
+ * Override any --bn-* variable on .bn-root to change a value.
  */
 .bn-root {
   --bn-font-family: inherit;
-  --bn-text-color: inherit;
+  --bn-text-color: light-dark(#18181b, #f4f4f5);
+  --bn-background: light-dark(#ffffff, #18181b);
   --bn-muted-color: color-mix(in srgb, currentColor 45%, transparent);
-  --bn-accent-color: #2563eb;
+  --bn-accent-color: light-dark(#2563eb, #60a5fa);
+  --bn-accent-contrast: light-dark(#ffffff, #0b1220);
+  --bn-error-color: light-dark(#dc2626, #f87171);
   --bn-code-background: color-mix(in srgb, currentColor 8%, transparent);
   --bn-block-spacing: 0.25rem;
   --bn-title-size: 2.25rem;
@@ -15,8 +24,17 @@
   --bn-h2-size: 1.5rem;
   --bn-h3-size: 1.25rem;
   font-family: var(--bn-font-family);
-
   color: var(--bn-text-color);
+  color-scheme: var(--bn-color-scheme, light dark);
+  background: var(--bn-background);
+}
+
+.bn-root[data-bn-theme="light"] {
+  color-scheme: light;
+}
+
+.bn-root[data-bn-theme="dark"] {
+  color-scheme: dark;
 }
 
 .bn-root .ProseMirror {
@@ -195,15 +213,18 @@
   max-height: 20rem;
   padding: 0.25rem;
   overflow-y: auto;
-  color: var(--bn-menu-color, inherit);
-  background: var(--bn-menu-background, Canvas);
+  color: var(--bn-menu-color, var(--bn-text-color));
+  background: var(--bn-menu-background, light-dark(#ffffff, #27272a));
   border: 1px solid
     var(
       --bn-menu-border-color,
       color-mix(in srgb, currentColor 15%, transparent)
     );
   border-radius: var(--bn-menu-radius, 0.5rem);
-  box-shadow: var(--bn-menu-shadow, 0 8px 24px rgb(0 0 0 / 12%));
+  box-shadow: var(
+    --bn-menu-shadow,
+    0 8px 24px light-dark(rgb(0 0 0 / 12%), rgb(0 0 0 / 48%))
+  );
 }
 
 .bn-slash-item {
@@ -258,15 +279,18 @@
   flex-direction: column;
   gap: 0.5rem;
   padding: 0.5rem;
-  color: var(--bn-menu-color, inherit);
-  background: var(--bn-menu-background, Canvas);
+  color: var(--bn-menu-color, var(--bn-text-color));
+  background: var(--bn-menu-background, light-dark(#ffffff, #27272a));
   border: 1px solid
     var(
       --bn-menu-border-color,
       color-mix(in srgb, currentColor 15%, transparent)
     );
   border-radius: var(--bn-menu-radius, 0.5rem);
-  box-shadow: var(--bn-menu-shadow, 0 8px 24px rgb(0 0 0 / 12%));
+  box-shadow: var(
+    --bn-menu-shadow,
+    0 8px 24px light-dark(rgb(0 0 0 / 12%), rgb(0 0 0 / 48%))
+  );
 }
 
 .bn-ai-popover {
@@ -332,7 +356,7 @@
 }
 
 .bn-ai-message[data-bn-ai-status="error"] .bn-ai-message-status {
-  color: var(--bn-ai-error-color, #dc2626);
+  color: var(--bn-ai-error-color, var(--bn-error-color));
 }
 
 .bn-ai-state {
@@ -373,7 +397,7 @@
 }
 
 .bn-ai-state[data-bn-ai-status="error"] .bn-ai-status {
-  color: var(--bn-ai-error-color, #dc2626);
+  color: var(--bn-ai-error-color, var(--bn-error-color));
 }
 
 .bn-ai-actions {
@@ -387,13 +411,13 @@
   font: inherit;
   color: inherit;
   cursor: pointer;
-  background: var(--bn-menu-background, Canvas);
+  background: var(--bn-menu-background, light-dark(#ffffff, #27272a));
   border: 1px solid color-mix(in srgb, currentColor 20%, transparent);
   border-radius: 0.375rem;
 }
 
 .bn-ai-button[data-bn-variant="primary"] {
-  color: var(--bn-accent-contrast, #fff);
+  color: var(--bn-accent-contrast);
   background: var(--bn-accent-color);
   border-color: transparent;
 }
@@ -405,5 +429,8 @@
 
 .bn-ask-ai {
   z-index: var(--bn-menu-z-index, 50);
-  box-shadow: var(--bn-menu-shadow, 0 8px 24px rgb(0 0 0 / 12%));
+  box-shadow: var(
+    --bn-menu-shadow,
+    0 8px 24px light-dark(rgb(0 0 0 / 12%), rgb(0 0 0 / 48%))
+  );
 }

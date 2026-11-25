@@ -1,8 +1,19 @@
 /* Styles of the playground only. The library ships no imposed styles. */
 .sb-playground {
   max-width: 48rem;
-  padding-bottom: 6rem;
+  padding: 1rem 1rem 6rem;
   margin: 0 auto;
+  color: light-dark(#18181b, #f4f4f5);
+  color-scheme: light dark;
+  background: light-dark(#ffffff, #18181b);
+}
+
+.sb-playground[data-sb-theme="light"] {
+  color-scheme: light;
+}
+
+.sb-playground[data-sb-theme="dark"] {
+  color-scheme: dark;
 }
 
 .sb-playground .bn-root {
@@ -30,11 +41,11 @@
 .sb-table td {
   padding: 0.25rem 0.5rem;
   text-align: left;
-  border: 1px solid #d4d4d8;
+  border: 1px solid light-dark(#d4d4d8, #3f3f46);
 }
 
 .sb-table th {
-  background: #f4f4f5;
+  background: light-dark(#f4f4f5, #27272a);
 }
 
 .sb-table input {
@@ -68,14 +79,14 @@
 .sb-pdf {
   padding-top: 1rem;
   margin-top: 2rem;
-  border-top: 1px solid #e4e4e7;
+  border-top: 1px solid light-dark(#e4e4e7, #3f3f46);
 }
 
 .sb-pdf iframe {
   width: 100%;
   height: 40rem;
   margin-top: 1rem;
-  border: 1px solid #e4e4e7;
+  border: 1px solid light-dark(#e4e4e7, #3f3f46);
 }
 
 /* Custom UI story */
@@ -152,7 +163,7 @@
   padding: 0.75rem 1rem;
   margin-bottom: 1rem;
   font-size: 0.875rem;
-  background: #f4f4f5;
+  background: light-dark(#f4f4f5, #27272a);
   border-radius: 0.5rem;
 }
 

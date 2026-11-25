@@ -24,6 +24,15 @@ import type { BlockNotesInstance } from "./use-block-notes.js";
 export type AiMode = "popover" | "chat";
 
 /**
+ * Color theme of the base styles (`@useblocknotes/react/styles.css`).
+ *
+ * - `system`: follows the operating system (`prefers-color-scheme`), or the
+ *   `--bn-color-scheme` variable when the host sets it.
+ * - `light` / `dark`: forces that theme with `data-bn-theme` on `.bn-root`.
+ */
+export type BlockNotesTheme = "system" | "light" | "dark";
+
+/**
  * Components that replace the built-in UI. Each one is optional: omit it to
  * keep the built-in component, or pass `null` to render nothing. The editor
  * keeps the logic (filtering, keys, AI state) and passes it as props.
@@ -65,6 +74,8 @@ export interface BlockNotesEditorProps {
   readonly askAiClassName?: string;
   /** Replaces or hides the slash menu and the AI components. */
   readonly components?: BlockNotesComponents;
+  /** Color theme of the base styles. Defaults to `"system"`. */
+  readonly theme?: BlockNotesTheme;
 }
 
 /**
@@ -87,6 +98,7 @@ export function BlockNotesEditor({
   components = {},
   contentClassName,
   editor,
+  theme = "system",
 }: BlockNotesEditorProps): ReactNode {
   const { ai, tiptap } = editor;
   const slashMenu = pick(components.slashMenu, SlashMenu);
@@ -99,6 +111,7 @@ export function BlockNotesEditor({
         <div
           className={join("bn-root", className)}
           data-bn-root=""
+          data-bn-theme={theme === "system" ? undefined : theme}
         >
           <EditorContent
             className={join("bn-content", contentClassName)}

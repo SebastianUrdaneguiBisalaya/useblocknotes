@@ -22,6 +22,7 @@ export type {
   AiMode,
   BlockNotesComponents,
   BlockNotesEditorProps,
+  BlockNotesTheme,
 } from "./editor.js";
 export { BlockNotesEditor } from "./editor.js";
 export type { FloatingProps, FloatingReference } from "./floating.js";

@@ -14,6 +14,7 @@ const meta = {
     onAiStart: fn(),
     onChange: fn(),
     pdf: false,
+    theme: "system",
   },
   argTypes: {
     aiMode: {
@@ -28,6 +29,14 @@ const meta = {
       options: [
         "en",
         "es",
+      ],
+    },
+    theme: {
+      control: "inline-radio",
+      options: [
+        "system",
+        "light",
+        "dark",
       ],
     },
   },
@@ -73,6 +82,20 @@ export const CustomUi: Story = {
 export const ExternalHotkeys: Story = {
   args: {
     externalHotkeys: true,
+  },
+};
+
+/** Light theme, forced with `theme="light"`. */
+export const LightTheme: Story = {
+  args: {
+    theme: "light",
+  },
+};
+
+/** Dark theme, forced with `theme="dark"`. */
+export const DarkTheme: Story = {
+  args: {
+    theme: "dark",
   },
 };
 
