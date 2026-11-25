@@ -191,6 +191,21 @@ export function checkBlock<TNode>(
     }
   } else {
     for (const [index, node] of (block.content ?? []).entries()) {
+      const isText = node.type === "text" && "text" in node;
+      const hasMarks = isText && (node.marks?.length ?? 0) > 0;
+      if (definition.content === "text" && (!isText || hasMarks)) {
+        issues.push({
+          blockId: block.id,
+          code: "unexpected_content",
+          path: [
+            ...path,
+            "content",
+            index,
+          ],
+          type: block.type,
+        });
+        continue;
+      }
       if (node.type === "text" && "text" in node) {
         content.push(
           node.marks === undefined
@@ -254,7 +269,7 @@ export function checkBlock<TNode>(
   return {
     ok: true,
     value:
-      definition.content === "inline"
+      definition.content !== "none"
         ? {
             content,
             id: block.id,
