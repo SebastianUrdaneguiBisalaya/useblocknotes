@@ -7,7 +7,10 @@ import {
   type AiStreamState,
   type BlockNotesDocument,
   type BlockRegistry,
+  outline,
+  pick,
   processAiStream,
+  toMarkdown,
 } from "@useblocknotes/core";
 import {
   type ReactNode,
@@ -91,8 +94,9 @@ export interface AiOptions {
    */
   readonly ai?: AiAdapter;
   /**
-   * Builds the `context` string sent to the adapter. Defaults to the title and
-   * the plain text of every block.
+   * Builds the `context` string sent to the adapter. Defaults to `outline()`
+   * of the document, plus the selected blocks and one neighbor on each side as
+   * Markdown.
    */
   readonly aiContext?: (
     document: BlockNotesDocument,
@@ -188,19 +192,23 @@ const CLOSED: View = {
   status: "idle",
 };
 
+/** The document outline, plus the selected blocks and their neighbors in full. */
 function defaultContext(
   document: BlockNotesDocument,
+  selection: AiSelection | null,
   registry: BlockRegistry<ReactNode>,
 ): string {
-  return [
-    `# ${document.title}`,
-    ...document.blocks.map((block) => {
-      const definition = registry.blocks.get(block.type);
-      return definition === undefined
-        ? registry.text.text(block.content)
-        : definition.toText(block, registry.text);
+  const summary = outline(document, registry);
+  if (selection === null) {
+    return summary;
+  }
+  const selected = toMarkdown(
+    pick(document, selection.blockIds, {
+      neighbors: 1,
     }),
-  ].join("\n\n");
+    registry,
+  );
+  return `${summary}\n\n## Selected blocks and their neighbors\n\n${selected}`;
 }
 
 /**
@@ -337,7 +345,7 @@ export function useAi(
           anchorBlockId: target.anchorBlockId,
           context:
             latest.current.aiContext?.(base, target.selection) ??
-            defaultContext(base, registry),
+            defaultContext(base, target.selection, registry),
           instruction,
           selection: target.selection,
           signal: controller.signal,
