@@ -18,6 +18,7 @@ export type { SlashMenuMessages } from "./slash-menu.js";
 export type { ReactBlockDefinition, ReactInlineDefinition } from "./types.js";
 export type {
   BlockNotesInstance,
+  ChangeMeta,
   UseBlockNotesOptions,
 } from "./use-block-notes.js";
 export { InvalidDocumentError, useBlockNotes } from "./use-block-notes.js";
