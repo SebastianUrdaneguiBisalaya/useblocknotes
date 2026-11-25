@@ -20,6 +20,8 @@ export {
   paragraphBlock,
   quoteBlock,
 } from "./blocks.js";
+export type { OutlineOptions, PickOptions } from "./context.js";
+export { outline, pick, toMarkdown } from "./context.js";
 export type {
   BlockContent,
   BlockDefinition,
