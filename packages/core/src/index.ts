@@ -1,3 +1,15 @@
+export type {
+  AbortSignalLike,
+  AiAdapter,
+  AiOperation,
+  AiRequest,
+  AiSelection,
+  AiStreamError,
+  AiStreamEvent,
+  AiStreamState,
+  ProcessAiStreamOptions,
+} from "./ai.js";
+export { processAiStream } from "./ai.js";
 export {
   bulletListItemBlock,
   codeBlock,

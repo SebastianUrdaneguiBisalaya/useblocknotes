@@ -121,28 +121,48 @@ export interface ApplyOperationsOptions<TNode = null> {
 const anchorSchema = z.nullable(z.string().check(z.minLength(1)));
 const idSchema = z.string().check(z.minLength(1));
 
+const insertSchema = z.object({
+  afterId: anchorSchema,
+  block: blockSchema,
+  op: z.literal("insert"),
+});
+
+const updateSchema = z.object({
+  content: z.exactOptional(z.array(inlineSchema)),
+  id: idSchema,
+  op: z.literal("update"),
+  props: z.exactOptional(propsSchema),
+  type: z.exactOptional(z.string().check(z.minLength(1))),
+});
+
+const deleteSchema = z.object({
+  id: idSchema,
+  op: z.literal("delete"),
+});
+
+const moveSchema = z.object({
+  afterId: anchorSchema,
+  id: idSchema,
+  op: z.literal("move"),
+});
+
+/**
+ * Shape of the block operations (`insert`, `update`, `delete`, `move`).
+ *
+ * @internal Shared with the AI stream protocol.
+ */
+export const blockOperationSchema = z.discriminatedUnion("op", [
+  insertSchema,
+  updateSchema,
+  deleteSchema,
+  moveSchema,
+]);
+
 const operationSchema = z.discriminatedUnion("op", [
-  z.object({
-    afterId: anchorSchema,
-    block: blockSchema,
-    op: z.literal("insert"),
-  }),
-  z.object({
-    content: z.exactOptional(z.array(inlineSchema)),
-    id: idSchema,
-    op: z.literal("update"),
-    props: z.exactOptional(propsSchema),
-    type: z.exactOptional(z.string().check(z.minLength(1))),
-  }),
-  z.object({
-    id: idSchema,
-    op: z.literal("delete"),
-  }),
-  z.object({
-    afterId: anchorSchema,
-    id: idSchema,
-    op: z.literal("move"),
-  }),
+  insertSchema,
+  updateSchema,
+  deleteSchema,
+  moveSchema,
   z.object({
     op: z.literal("set_title"),
     title: z.string(),
