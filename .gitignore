@@ -1,0 +1,22 @@
+# ignored in every package of the workspace (packages/* and the root)
+**/node_modules
+
+# Environment variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# output
+out
+dist
+*.tgz
+
+# caches
+.eslintcache
+.cache
+*.tsbuildinfo
+
+# Finder (MacOS) folder config
+.DS_Store

@@ -1,0 +1,14 @@
+{
+  // Framework-agnostic core: inherits the base `lib` (ES2023 + Temporal) with no DOM types on purpose.
+  "$schema": "https://json.schemastore.org/tsconfig",
+  "exclude": [
+    "node_modules",
+    "dist"
+  ],
+  "extends": "../../tsconfig.base.json",
+  "include": [
+    "src",
+    "tests",
+    "bench"
+  ]
+}
