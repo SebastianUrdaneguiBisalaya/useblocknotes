@@ -7,10 +7,12 @@ import type {
 } from "./document.js";
 
 /**
- * Whether a block holds inline content (text, marks and inline elements) or
- * keeps all its data in props (for example a table or a chart).
+ * What a block holds besides its props:
+ * - `"inline"`: rich inline content (text, marks and inline elements);
+ * - `"text"`: plain text only, no marks or inline elements (for example code);
+ * - `"none"`: nothing, all data lives in props (for example a table or a chart).
  */
-export type BlockContent = "inline" | "none";
+export type BlockContent = "inline" | "text" | "none";
 
 /** Converts inline content to text or Markdown, using the registered inline elements. */
 export interface TextContext {

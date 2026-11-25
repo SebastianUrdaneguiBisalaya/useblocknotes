@@ -1,5 +1,16 @@
 export type { BlockContentProps, BlockContentTag } from "./blocks.js";
-export { BlockContent, defaultBlocks, heading, paragraph } from "./blocks.js";
+export {
+  BlockContent,
+  bulletListItem,
+  code,
+  defaultBlocks,
+  heading,
+  numberedListItem,
+  paragraph,
+  quote,
+} from "./blocks.js";
+export type { BlockViewState } from "./context.js";
+export { useBlockView } from "./context.js";
 export type { BlockNotesEditorProps } from "./editor.js";
 export { BlockNotesEditor } from "./editor.js";
 export type { Placeholders } from "./extensions.js";

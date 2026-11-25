@@ -1,7 +1,12 @@
 export {
+  bulletListItemBlock,
+  codeBlock,
   defaultBlocks,
   headingBlock,
+  MAX_LIST_INDENT,
+  numberedListItemBlock,
   paragraphBlock,
+  quoteBlock,
 } from "./blocks.js";
 export type {
   BlockContent,

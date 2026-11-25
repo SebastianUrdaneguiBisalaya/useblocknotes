@@ -55,8 +55,131 @@ export const headingBlock = defineBlock({
   type: "heading",
 });
 
-/** The built-in blocks: paragraph and headings. */
+/** Deepest list indent level. */
+export const MAX_LIST_INDENT = 6;
+
+const listProps = z.object({
+  indent: z._default(z.int().check(z.gte(0), z.lte(MAX_LIST_INDENT)), 0),
+});
+
+/**
+ * A bulleted list item. The document stays flat: nesting is the `indent` prop
+ * (0 to {@link MAX_LIST_INDENT}). Built in.
+ */
+export const bulletListItemBlock = defineBlock({
+  content: "inline",
+  schema: listProps,
+  slash: [
+    {
+      defaultProps: {
+        indent: 0,
+      },
+      keywords: [
+        "bullet",
+        "list",
+        "unordered",
+        "ul",
+      ],
+      label: "Bulleted list",
+    },
+  ],
+  toMarkdown: (block, context) =>
+    `${"  ".repeat(block.props.indent)}- ${context.markdown(block.content)}`,
+  toText: (block, context) => context.text(block.content),
+  type: "bulletListItem",
+});
+
+/**
+ * A numbered list item. Consecutive items at the same indent are numbered
+ * together. Nesting is the `indent` prop (0 to {@link MAX_LIST_INDENT}). Built in.
+ */
+export const numberedListItemBlock = defineBlock({
+  content: "inline",
+  schema: listProps,
+  slash: [
+    {
+      defaultProps: {
+        indent: 0,
+      },
+      keywords: [
+        "numbered",
+        "ordered",
+        "list",
+        "ol",
+      ],
+      label: "Numbered list",
+    },
+  ],
+  // Markdown renumbers `1.` items, so every item can use `1.`.
+  toMarkdown: (block, context) =>
+    `${"   ".repeat(block.props.indent)}1. ${context.markdown(block.content)}`,
+  toText: (block, context) => context.text(block.content),
+  type: "numberedListItem",
+});
+
+/** A quote. Built in. */
+export const quoteBlock = defineBlock<"quote", BlockProps>({
+  content: "inline",
+  schema: z.object({}),
+  slash: [
+    {
+      defaultProps: {},
+      keywords: [
+        "quote",
+        "blockquote",
+        "citation",
+      ],
+      label: "Quote",
+    },
+  ],
+  toMarkdown: (block, context) =>
+    context
+      .markdown(block.content)
+      .split("\n")
+      .map((line) => `> ${line}`)
+      .join("\n"),
+  toText: (block, context) => context.text(block.content),
+  type: "quote",
+});
+
+/** A code block: plain text with an optional `language`. Built in. */
+export const codeBlock = defineBlock({
+  content: "text",
+  schema: z.object({
+    language: z._default(z.string(), ""),
+  }),
+  slash: [
+    {
+      defaultProps: {
+        language: "",
+      },
+      keywords: [
+        "code",
+        "snippet",
+        "pre",
+      ],
+      label: "Code",
+    },
+  ],
+  toMarkdown: (block, context) => {
+    const code = context.text(block.content);
+    const longestRun = Math.max(
+      0,
+      ...(code.match(/`+/g) ?? []).map((run) => run.length),
+    );
+    const fence = "`".repeat(Math.max(3, longestRun + 1));
+    return `${fence}${block.props.language}\n${code}\n${fence}`;
+  },
+  toText: (block, context) => context.text(block.content),
+  type: "codeBlock",
+});
+
+/** The built-in blocks: paragraph, headings, lists, quote and code. */
 export const defaultBlocks = [
   paragraphBlock,
   headingBlock,
+  bulletListItemBlock,
+  numberedListItemBlock,
+  quoteBlock,
+  codeBlock,
 ] as const;

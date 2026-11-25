@@ -1,6 +1,15 @@
 import { NodeViewContent } from "@tiptap/react";
-import { headingBlock, paragraphBlock } from "@useblocknotes/core";
-import type { ReactNode } from "react";
+import {
+  type BlockRenderProps,
+  bulletListItemBlock,
+  codeBlock,
+  headingBlock,
+  numberedListItemBlock,
+  paragraphBlock,
+  quoteBlock,
+} from "@useblocknotes/core";
+import type { CSSProperties, ReactNode } from "react";
+import { useBlockView } from "./context.js";
 import type { ReactBlockDefinition } from "./types.js";
 
 /** Element that wraps a block's editable inline content. */
@@ -10,6 +19,7 @@ export type BlockContentTag =
   | "h1"
   | "h2"
   | "h3"
+  | "code"
   | "blockquote"
   | "pre";
 
@@ -60,8 +70,113 @@ export const heading: ReactBlockDefinition = {
   },
 };
 
-/** The built-in blocks with React renders: paragraph and headings. */
+function indentStyle(props: BlockRenderProps): CSSProperties {
+  const indent = props.block.props["indent"];
+  return {
+    "--bn-indent": typeof indent === "number" ? indent : 0,
+  } as CSSProperties;
+}
+
+function BulletListItem(props: BlockRenderProps): ReactNode {
+  return (
+    <div
+      className="bn-list-item"
+      data-bn-indent={props.block.props["indent"]}
+      style={indentStyle(props)}
+    >
+      <span
+        aria-hidden="true"
+        className="bn-list-marker"
+        contentEditable={false}
+      />
+      <BlockContent />
+    </div>
+  );
+}
+
+function NumberedListItem(props: BlockRenderProps): ReactNode {
+  const { listNumber } = useBlockView();
+  return (
+    <div
+      className="bn-list-item"
+      data-bn-indent={props.block.props["indent"]}
+      style={indentStyle(props)}
+    >
+      <span
+        aria-hidden="true"
+        className="bn-list-marker"
+        contentEditable={false}
+      >
+        {`${listNumber ?? 1}.`}
+      </span>
+      <BlockContent />
+    </div>
+  );
+}
+
+function CodeBlock({
+  block,
+  editable,
+  updateProps,
+}: BlockRenderProps): ReactNode {
+  const language = block.props["language"];
+  const value = typeof language === "string" ? language : "";
+  return (
+    <div className="bn-code">
+      {editable ? (
+        <input
+          aria-label="Code language"
+          className="bn-code-language"
+          contentEditable={false}
+          onChange={(event) =>
+            updateProps({
+              ...block.props,
+              language: event.target.value,
+            })
+          }
+          placeholder="Language"
+          value={value}
+        />
+      ) : value === "" ? null : (
+        <span className="bn-code-language">{value}</span>
+      )}
+      <pre data-language={value === "" ? undefined : value}>
+        <BlockContent as="code" />
+      </pre>
+    </div>
+  );
+}
+
+/** Core's bulleted list item. Nesting is shown with the `--bn-indent` variable. */
+export const bulletListItem: ReactBlockDefinition = {
+  ...bulletListItemBlock,
+  render: BulletListItem,
+};
+
+/** Core's numbered list item, numbered by consecutive run and indent. */
+export const numberedListItem: ReactBlockDefinition = {
+  ...numberedListItemBlock,
+  render: NumberedListItem,
+};
+
+/** Core's quote block, rendered as `<blockquote>`. */
+export const quote: ReactBlockDefinition = {
+  ...quoteBlock,
+  render: () => <BlockContent as="blockquote" />,
+};
+
+/** Core's code block, rendered as `<pre><code>` with an editable language. */
+export const code: ReactBlockDefinition = {
+  ...codeBlock,
+  render: CodeBlock,
+};
+
+/** The built-in blocks with React renders: paragraph, headings, lists, quote and code. */
 export const defaultBlocks: readonly ReactBlockDefinition[] = [
   paragraph,
   heading,
+  bulletListItem,
+  numberedListItem,
+  quote,
+  code,
 ];
