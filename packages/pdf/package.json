@@ -68,12 +68,20 @@
     }
   },
   "peerDependencies": {
-    "@useblocknotes/core": "workspace:^"
+    "@useblocknotes/core": "workspace:^",
+    "react": "^19",
+    "zod": "^4"
   },
   "devDependencies": {
     "@types/bun": "catalog:",
+    "@types/react": "catalog:",
     "@useblocknotes/core": "workspace:^",
+    "react": "catalog:",
     "tsup": "catalog:",
-    "typescript": "catalog:"
+    "typescript": "catalog:",
+    "zod": "catalog:"
+  },
+  "dependencies": {
+    "@react-pdf/renderer": "4.9.1"
   }
 }

@@ -1,12 +1,16 @@
 {
-  // PDF export: the shared base. Type-checks against core's source so `typecheck` doesn't need core built first.
+  // PDF export: the shared base plus the automatic JSX runtime (react-pdf elements). Type-checks against core's source so `typecheck` doesn't need core built first.
   "$schema": "https://json.schemastore.org/tsconfig",
   "compilerOptions": {
+    "jsx": "react-jsx",
     "paths": {
       "@useblocknotes/core": [
         "../core/src/index.ts"
       ]
-    }
+    },
+    "types": [
+      "bun"
+    ]
   },
   "exclude": [
     "node_modules",
