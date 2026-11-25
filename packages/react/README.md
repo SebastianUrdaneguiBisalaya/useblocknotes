@@ -1,6 +1,70 @@
 # @useblocknotes/react
 
-React 19 components and hooks for useblocknotes.
+React 19 components and hooks for [useblocknotes](https://github.com/SebastianUrdaneguiBisalaya/useblocknotes), a Notion-style block editor built on Tiptap core with AI responses streamed live into the editor.
+
+## Installation
+
+```sh
+npm install @useblocknotes/react @useblocknotes/core react react-dom zod
+```
+
+`@useblocknotes/core`, `react` and `react-dom` 19, and `zod` 4 are peer dependencies. Tiptap and ProseMirror (MIT) are installed as dependencies.
+
+## Usage
+
+```tsx
+import type { BlockNotesDocument } from "@useblocknotes/core";
+import { BlockNotesEditor, defaultBlocks, useBlockNotes } from "@useblocknotes/react";
+import "@useblocknotes/react/styles.css"; // optional base styles
+
+export function Notes({ document }: { readonly document: BlockNotesDocument }) {
+  const editor = useBlockNotes({
+    blocks: [...defaultBlocks, callout],
+    initialDocument: document,
+    ai: aiAdapter,
+    onChange: (operations, document, { baseVersion }) => save(operations, document),
+  });
+  return <BlockNotesEditor editor={editor} aiMode="popover" />;
+}
+```
+
+See the [root README](../../README.md) for defining blocks, writing an AI adapter and the operations reference.
+
+### `useBlockNotes(options)`
+
+| Option | Description |
+| --- | --- |
+| `blocks` | Block types. Defaults to `defaultBlocks`: paragraph, headings, bulleted and numbered lists, quote and code. |
+| `inlines` | Custom inline element types. |
+| `initialDocument` | Document to start with. An invalid document throws `InvalidDocumentError`. |
+| `editable` | `false` for read-only mode. Can change at any time. |
+| `locale`, `messages` | Language of the UI (`"en"` or `"es"`) and overrides of any string. Can change at any time. |
+| `onChange(operations, document, meta)` | Batches of edits, debounced by `changeDebounceMs` (500 ms). `meta.baseVersion` is the `baseVersion` option. |
+| `baseVersion`, `changeDebounceMs` | Version forwarded in `onChange`, and the debounce delay. |
+| `ai`, `aiContext`, `onAiStart`, `onAiFinish`, `onAiError` | The AI adapter, how its context is built, and AI callbacks. |
+| `shortcuts` | Keyboard shortcuts. See [Keyboard shortcuts](#keyboard-shortcuts). |
+
+It returns the editor instance: `getDocument()`, `applyOperations()`, `flushChanges()`, `commands`, `ai` (AI state and actions), `registry`, `messages` and `tiptap` (the underlying Tiptap editor, `null` until it mounts).
+
+### `<BlockNotesEditor />`
+
+| Prop | Description |
+| --- | --- |
+| `editor` | The instance returned by `useBlockNotes()`. |
+| `aiMode` | `"popover"` (next to the cursor, the default) or `"chat"` (a bar at the bottom with the request history). |
+| `theme` | `"system"` (default), `"light"` or `"dark"`. See [Light and dark themes](#light-and-dark-themes). |
+| `components` | Replaces or hides the built-in slash menu and AI UI. See [Custom UI components](#custom-ui-components). |
+| `className`, `contentClassName`, `aiPopoverClassName`, `aiChatClassName`, `askAiClassName` | Class names of each part. |
+
+### Blocks with inline content
+
+Custom blocks render `<BlockContent />` where their editable text goes:
+
+```tsx
+render: () => <BlockContent as="blockquote" className="callout" />,
+```
+
+Blocks with `content: "none"` render their own UI and change their props with `updateProps()`. `useBlockView()` returns the state of the current block inside its render.
 
 ## Light and dark themes
 
