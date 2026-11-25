@@ -1,4 +1,4 @@
-import { readdir, readFile, writeFile } from "node:fs/promises";
+import { copyFile, readdir, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { defineConfig, type Options } from "tsup";
 
@@ -70,7 +70,10 @@ export function createConfig(outDir: string = OUT_DIR): Options {
 
     minify: false,
 
-    onSuccess: () => prependUseClient(outDir),
+    onSuccess: async () => {
+      await prependUseClient(outDir);
+      await copyFile("src/styles.css", join(outDir, "styles.css"));
+    },
 
     outDir,
 

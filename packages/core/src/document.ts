@@ -24,6 +24,28 @@ export type Mark =
       readonly href: string;
     };
 
+/** Mark types in canonical order. Validated text nodes list their marks in this order. */
+export const MARK_TYPES: readonly Mark["type"][] = [
+  "bold",
+  "italic",
+  "underline",
+  "strike",
+  "code",
+  "link",
+];
+
+/** Returns marks sorted in {@link MARK_TYPES} order, without duplicate types. */
+export function sortMarks(marks: readonly Mark[]): Mark[] {
+  return MARK_TYPES.flatMap((type) => {
+    const mark = marks.find((m) => m.type === type);
+    return mark === undefined
+      ? []
+      : [
+          mark,
+        ];
+  });
+}
+
 /** A run of text inside a block, with optional marks. */
 export interface TextNode {
   readonly type: "text";

@@ -1,0 +1,72 @@
+/*
+ * Optional base styles for @useblocknotes/react.
+ * Import with: import "@useblocknotes/react/styles.css";
+ * Override any --bn-* variable on .bn-root (or an ancestor) to theme it.
+ */
+.bn-root {
+  --bn-font-family: inherit;
+  --bn-text-color: inherit;
+  --bn-muted-color: color-mix(in srgb, currentColor 45%, transparent);
+  --bn-accent-color: #2563eb;
+  --bn-code-background: color-mix(in srgb, currentColor 8%, transparent);
+  --bn-block-spacing: 0.25rem;
+  --bn-title-size: 2.25rem;
+  --bn-h1-size: 1.875rem;
+  --bn-h2-size: 1.5rem;
+  --bn-h3-size: 1.25rem;
+  font-family: var(--bn-font-family);
+
+  color: var(--bn-text-color);
+}
+
+.bn-root .ProseMirror {
+  outline: none;
+}
+
+.bn-root .bn-title {
+  margin: 0 0 1rem;
+  font-size: var(--bn-title-size);
+  font-weight: 700;
+}
+
+.bn-root .bn-block {
+  margin: var(--bn-block-spacing) 0;
+}
+
+.bn-root .bn-block-content {
+  margin: 0;
+}
+
+.bn-root h1.bn-block-content {
+  font-size: var(--bn-h1-size);
+}
+
+.bn-root h2.bn-block-content {
+  font-size: var(--bn-h2-size);
+}
+
+.bn-root h3.bn-block-content {
+  font-size: var(--bn-h3-size);
+}
+
+.bn-root code {
+  padding: 0.1em 0.3em;
+  background: var(--bn-code-background);
+  border-radius: 0.25rem;
+}
+
+.bn-root a {
+  color: var(--bn-accent-color);
+}
+
+.bn-root .is-empty::before {
+  float: left;
+  height: 0;
+  color: var(--bn-muted-color);
+  pointer-events: none;
+  content: attr(data-placeholder);
+}
+
+.bn-root .ProseMirror-selectednode {
+  outline: 2px solid var(--bn-accent-color);
+}

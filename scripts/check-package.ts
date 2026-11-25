@@ -130,11 +130,21 @@ async function checkPackage(dir: string, outDir: string): Promise<boolean> {
     `${publint.ok ? "✓" : "✗"} publint${publint.ok ? "" : `\n${publint.output}`}`,
   );
 
+  // Stylesheet entrypoints have no types or JS to resolve.
+  const cssEntrypoints = Object.keys(pkg.exports ?? {}).filter((key) =>
+    key.endsWith(".css"),
+  );
   const attw = run([
     bin("attw"),
     "--no-emoji",
     "--no-color",
     tarballPath,
+    ...(cssEntrypoints.length > 0
+      ? [
+          "--exclude-entrypoints",
+          ...cssEntrypoints,
+        ]
+      : []),
   ]);
   console[attw.ok ? "log" : "error"](
     `${attw.ok ? "✓" : "✗"} attw${attw.ok ? "" : `\n${attw.output}`}`,

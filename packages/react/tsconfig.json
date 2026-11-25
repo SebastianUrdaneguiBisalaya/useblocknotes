@@ -15,7 +15,10 @@
       "@useblocknotes/core": [
         "../core/src/index.ts"
       ]
-    }
+    },
+    "types": [
+      "bun"
+    ]
   },
   "exclude": [
     "node_modules",
