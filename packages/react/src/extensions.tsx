@@ -39,6 +39,11 @@ import { BlockViewContext } from "./context.js";
 import { BLOCK_GROUP, nodeToBlock, TITLE_NODE } from "./convert.js";
 import { BlockKeymap, ListNumbers, listNumberOf } from "./lists.js";
 import { BlockMove, DragHandle } from "./move.js";
+import {
+  blockSlashItems,
+  createSlashMenu,
+  type SlashMenuMessages,
+} from "./slash-menu.js";
 import type { ReactBlockDefinition, ReactInlineDefinition } from "./types.js";
 
 /** Placeholder texts shown in empty nodes. */
@@ -343,11 +348,18 @@ const BlockIds = Extension.create({
   name: "blockNotesIds",
 });
 
+/** Options of {@link createExtensions}. */
+export interface ExtensionOptions {
+  readonly placeholders: Placeholders;
+  readonly slashMenu: SlashMenuMessages;
+}
+
 /** Builds the Tiptap extensions for a registry. */
 export function createExtensions(
   registry: BlockRegistry<ReactNode>,
-  placeholders: Placeholders,
+  options: ExtensionOptions,
 ): Extensions {
+  const { placeholders } = options;
   return [
     Document.extend({
       content: `${TITLE_NODE} ${BLOCK_GROUP}*`,
@@ -385,5 +397,9 @@ export function createExtensions(
     ListNumbers,
     BlockKeymap,
     BlockMove,
+    createSlashMenu({
+      items: blockSlashItems(registry),
+      messages: options.slashMenu,
+    }),
   ];
 }

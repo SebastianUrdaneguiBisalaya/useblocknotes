@@ -1,5 +1,6 @@
 import { NodeViewContent } from "@tiptap/react";
 import {
+  type BlockProps,
   type BlockRenderProps,
   bulletListItemBlock,
   codeBlock,
@@ -7,6 +8,7 @@ import {
   numberedListItemBlock,
   paragraphBlock,
   quoteBlock,
+  type SlashMenuEntry,
 } from "@useblocknotes/core";
 import type { CSSProperties, ReactNode } from "react";
 import { useBlockView } from "./context.js";
@@ -55,10 +57,24 @@ export function BlockContent({
   );
 }
 
+/** Adds text icons to core slash entries, in order. */
+function withIcons(
+  entries: readonly SlashMenuEntry<BlockProps>[] | undefined,
+  icons: readonly string[],
+): readonly SlashMenuEntry<BlockProps, ReactNode>[] {
+  return (entries ?? []).map((entry, index) => ({
+    ...entry,
+    icon: icons[index] ?? null,
+  }));
+}
+
 /** Core's paragraph block, rendered as `<p>`. */
 export const paragraph: ReactBlockDefinition = {
   ...paragraphBlock,
   render: () => <BlockContent as="p" />,
+  slash: withIcons(paragraphBlock.slash, [
+    "T",
+  ]),
 };
 
 /** Core's heading block, rendered as `<h1>` to `<h3>` by level. */
@@ -68,6 +84,11 @@ export const heading: ReactBlockDefinition = {
     const level = block.props["level"];
     return <BlockContent as={level === 2 ? "h2" : level === 3 ? "h3" : "h1"} />;
   },
+  slash: withIcons(headingBlock.slash, [
+    "H1",
+    "H2",
+    "H3",
+  ]),
 };
 
 function indentStyle(props: BlockRenderProps): CSSProperties {
@@ -151,24 +172,36 @@ function CodeBlock({
 export const bulletListItem: ReactBlockDefinition = {
   ...bulletListItemBlock,
   render: BulletListItem,
+  slash: withIcons(bulletListItemBlock.slash, [
+    "•",
+  ]),
 };
 
 /** Core's numbered list item, numbered by consecutive run and indent. */
 export const numberedListItem: ReactBlockDefinition = {
   ...numberedListItemBlock,
   render: NumberedListItem,
+  slash: withIcons(numberedListItemBlock.slash, [
+    "1.",
+  ]),
 };
 
 /** Core's quote block, rendered as `<blockquote>`. */
 export const quote: ReactBlockDefinition = {
   ...quoteBlock,
   render: () => <BlockContent as="blockquote" />,
+  slash: withIcons(quoteBlock.slash, [
+    "❝",
+  ]),
 };
 
 /** Core's code block, rendered as `<pre><code>` with an editable language. */
 export const code: ReactBlockDefinition = {
   ...codeBlock,
   render: CodeBlock,
+  slash: withIcons(codeBlock.slash, [
+    "</>",
+  ]),
 };
 
 /** The built-in blocks with React renders: paragraph, headings, lists, quote and code. */
