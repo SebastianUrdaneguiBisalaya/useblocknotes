@@ -64,7 +64,8 @@ const jsonSchema: z.ZodMiniType<JsonValue> = z.lazy(() =>
   ]),
 );
 
-const propsSchema = z.record(z.string(), jsonSchema);
+/** @internal */
+export const propsSchema = z.record(z.string(), jsonSchema);
 
 const markSchema = z.discriminatedUnion("type", [
   z.object({
@@ -82,7 +83,8 @@ const markSchema = z.discriminatedUnion("type", [
   }),
 ]);
 
-const inlineSchema = z.union([
+/** @internal */
+export const inlineSchema = z.union([
   z.object({
     marks: z.exactOptional(z.array(markSchema)),
     text: z.string(),
@@ -94,7 +96,8 @@ const inlineSchema = z.union([
   }),
 ]);
 
-const blockSchema = z.object({
+/** @internal */
+export const blockSchema = z.object({
   content: z.exactOptional(z.array(inlineSchema)),
   id: z.string().check(z.minLength(1)),
   props: propsSchema,
@@ -106,7 +109,8 @@ const documentSchema = z.object({
   title: z.string(),
 });
 
-function toPath(path: readonly PropertyKey[]): (string | number)[] {
+/** @internal */
+export function toPath(path: readonly PropertyKey[]): (string | number)[] {
   return path.map((key) => (typeof key === "symbol" ? String(key) : key));
 }
 
