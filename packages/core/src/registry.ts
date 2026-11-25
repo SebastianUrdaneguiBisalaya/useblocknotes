@@ -9,7 +9,25 @@ import type { BlockProps, InlineNode, Mark, TextNode } from "./document.js";
 export type RegistryErrorCode =
   | "duplicate_block_type"
   | "duplicate_inline_type"
+  | "reserved_block_type"
   | "reserved_inline_type";
+
+/**
+ * Names used by the document itself and by text marks. Block and inline types
+ * cannot use them, because editors keep blocks, inline elements and marks in
+ * one namespace.
+ */
+export const RESERVED_TYPES: ReadonlySet<string> = new Set([
+  "doc",
+  "text",
+  "title",
+  "bold",
+  "italic",
+  "underline",
+  "strike",
+  "code",
+  "link",
+]);
 
 /** Thrown by `createRegistry()` when the block or inline definitions are invalid. */
 export class RegistryError extends Error {
@@ -97,7 +115,7 @@ function textToMarkdown(node: TextNode): string {
 /**
  * Creates a registry from block and inline definitions.
  *
- * @throws {RegistryError} If two definitions share a type, or an inline type is `"text"`.
+ * @throws {RegistryError} If two definitions share a type, or a type is in {@link RESERVED_TYPES}.
  *
  * @example
  * ```ts
@@ -109,6 +127,9 @@ export function createRegistry<TNode = null>(
 ): BlockRegistry<TNode> {
   const blocks = new Map<string, BlockDefinition<string, BlockProps, TNode>>();
   for (const block of options.blocks) {
+    if (RESERVED_TYPES.has(block.type)) {
+      throw new RegistryError("reserved_block_type", block.type);
+    }
     if (blocks.has(block.type)) {
       throw new RegistryError("duplicate_block_type", block.type);
     }
@@ -120,10 +141,10 @@ export function createRegistry<TNode = null>(
     InlineDefinition<string, BlockProps, TNode>
   >();
   for (const inline of options.inlines ?? []) {
-    if (inline.type === "text") {
+    if (RESERVED_TYPES.has(inline.type)) {
       throw new RegistryError("reserved_inline_type", inline.type);
     }
-    if (inlines.has(inline.type)) {
+    if (inlines.has(inline.type) || blocks.has(inline.type)) {
       throw new RegistryError("duplicate_inline_type", inline.type);
     }
     inlines.set(inline.type, inline);

@@ -1,11 +1,12 @@
 import * as z from "zod/mini";
 import { type $ZodIssue, safeParse } from "zod/v4/core";
-import type {
-  Block,
-  BlockNotesDocument,
-  BlockProps,
-  InlineNode,
-  JsonValue,
+import {
+  type Block,
+  type BlockNotesDocument,
+  type BlockProps,
+  type InlineNode,
+  type JsonValue,
+  sortMarks,
 } from "./document.js";
 import type { BlockRegistry } from "./registry.js";
 import type { Result } from "./result.js";
@@ -191,7 +192,14 @@ export function checkBlock<TNode>(
   } else {
     for (const [index, node] of (block.content ?? []).entries()) {
       if (node.type === "text" && "text" in node) {
-        content.push(node);
+        content.push(
+          node.marks === undefined
+            ? node
+            : {
+                ...node,
+                marks: sortMarks(node.marks),
+              },
+        );
         continue;
       }
       const nodePath = [
